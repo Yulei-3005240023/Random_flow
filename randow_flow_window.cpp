@@ -246,6 +246,16 @@ void Randow_flow_Window::on_doubleSpinBox_rain_valueChanged(double arg1)
     ui->textBrowser_rain_function->append(str);
 }
 
+void Randow_flow_Window::on_doubleSpinBox_rain_x_valueChanged(double arg1)
+{
+    QString str = QString::number(arg1/ (1000 * 365));
+    flow.source_sink_expectation_x(arg1 / (1000 * 365));  // 一年的降雨量期望转化为一天的
+    ui->textBrowser_rain_function_x->clear();  // 重置展示降雨量函数的框
+    flow.clear_list_source_sink_term_x();  // 重置降雨量波动列表
+    ui->textBrowser_rain_function_x->append(str);
+}
+
+
 void Randow_flow_Window::on_spinBox_t_length_valueChanged(int arg1)
 {
     flow.t_length(arg1);
@@ -524,5 +534,189 @@ void Randow_flow_Window::on_draw_solve_line_location_fft_clicked()
     series_head->attachAxis(axis_x);
     series_head->attachAxis(axis_head);
 
+}
+
+
+void Randow_flow_Window::on_random_new_wave_x_clicked()
+{
+    if(ui->spinBox_x_length->value() != 0) flow.x_length(ui->spinBox_x_length->value());
+    flow.random_source_sink_term_x();
+    std::vector<std::vector<double>> list_source_sink_term = flow.share_list_source_sink_term_x();
+    QString str = QString::number(ui->doubleSpinBox_rain_x->value()/ (1000 * 365));
+    for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
+        if(list_source_sink_term[i][0] == 0){
+            str += " + " + QString::number(list_source_sink_term[i][1]) + "sin((2pi / " + QString::number(list_source_sink_term[i][2]) + ") * x)";
+        }
+        else if(list_source_sink_term[i][0] == 1){
+            str += " + " + QString::number(list_source_sink_term[i][1]) + "cos((2pi / " + QString::number(list_source_sink_term[i][2]) + ") * x)";
+        }
+    };
+    ui->textBrowser_rain_function_x->clear();
+    ui->textBrowser_rain_function_x->append(str);
+}
+
+
+void Randow_flow_Window::on_delete_wave_x_clicked()
+{
+    if(flow.share_list_source_sink_term_x().size() == 0) return;
+    else{
+        flow.del_last_list_source_sink_term_x();
+        std::vector<std::vector<double>> list_source_sink_term = flow.share_list_source_sink_term_x();
+        QString str = QString::number(ui->doubleSpinBox_rain_x->value()/ (1000 * 365));
+        for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
+            if(list_source_sink_term[i][0] == 0){
+                str += " + " + QString::number(list_source_sink_term[i][1]) + "sin((2pi / " + QString::number(list_source_sink_term[i][2]) + ") * x)";
+            }
+            else if(list_source_sink_term[i][0] == 1){
+                str += " + " + QString::number(list_source_sink_term[i][1]) + "cos((2pi / " + QString::number(list_source_sink_term[i][2]) + ") * x)";
+            }
+        };
+        ui->textBrowser_rain_function_x->clear();
+        ui->textBrowser_rain_function_x->append(str);
+    }
+}
+
+
+void Randow_flow_Window::on_draw_solve_line_fft_clicked()
+{
+    chart_head->removeSeries(series_head); // 清除原有图表
+    chart_head->removeAxis(axis_x);
+    chart_head->removeAxis(axis_head);
+    series_head->clear();
+
+    QString title = "数值解，空间差分步长为" +QString::number(flow.show_sl()) + "时间差分步长为" + QString::number(flow.show_st()) + "，绘图时刻为第" + QString::number(ui->spinBox_time->value()) + "时刻。";
+    ui->graphicsView->setChart(chart_head);
+    chart_head->setTitle(title);
+    series_head->setName("水头曲线: 数值解(频域)");
+
+    int a = ui->spinBox_time->value();
+    // 快速傅里叶变换振幅
+    Eigen::VectorXd Amplitude_fft = flow.fast_fourier_transfrom(solve_fdm.row(a), flow.show_m());
+    // 找到最大振幅值，以便设置绘图坐标轴
+    double max_A = Amplitude_fft.maxCoeff();
+    double w = 0.0;
+    for (double W : Amplitude_fft) {
+        series_head->append(w, W);
+        w += (1/ flow.show_xl());
+    }
+
+    axis_x->setRange(0,  1 / (2*flow.show_sl())); // 转换为取一半的频率坐标
+    axis_x->setLabelFormat("%.2f"); // 标签格式
+    axis_x->setTickCount(11);
+    axis_x->setMinorTickCount(2);
+    axis_x->setTitleText("频率(Hz)");
+
+    axis_head->setRange(0, max_A);
+    axis_head->setLabelFormat("%.4f"); // 标签格式
+    axis_head->setTickCount(11);
+    axis_head->setMinorTickCount(2);
+    axis_head->setTitleText("振幅(m)");
+
+    chart_head->addSeries(series_head); // 更新图表
+    chart_head->addAxis(axis_x, Qt::AlignBottom);
+    chart_head->addAxis(axis_head, Qt::AlignLeft);
+    series_head->attachAxis(axis_x);
+    series_head->attachAxis(axis_head);
+}
+
+
+void Randow_flow_Window::on_time_field_figure_x_clicked()
+{
+    chart_W->removeSeries(series_W); // 清除原有图表
+    chart_W->removeAxis(axis_W);
+    chart_W->removeAxis(axis_w);
+    series_W->clear();
+
+    QString title = "源汇项(空间随机)时域图像";
+    ui->graphicsView_W->setChart(chart_W);
+    chart_W->setTitle(title);
+    series_W->setName("源汇项波动曲线");
+    int n = floor(flow.show_xl() / flow.show_sl()) + 1;
+    double x = 0.0;
+    double min_h = 100.0;
+    double max_h = 0.0;
+    for(int i = 0; i < n; i++){
+        double h =flow.source_sink_term_x(x);
+        series_W->append(x, h);
+        x += flow.show_sl();
+        if(h < min_h) min_h = h;
+        if(h > max_h) max_h = h;
+    }
+
+    axis_w->setRange(0, flow.show_xl());
+    axis_w->setGridLineVisible(false);
+    axis_w->setLabelFormat("%.1f"); // 标签格式
+    axis_w->setTickCount(6);
+    axis_w->setMinorTickCount(1);
+    axis_w->setTitleText("T轴(d)");
+
+    axis_W->setRange(min_h, max_h);
+    axis_W->setGridLineVisible(false);
+    axis_W->setLabelFormat("%.5f"); // 标签格式
+    axis_W->setTickCount(6);
+    axis_W->setMinorTickCount(1);
+    axis_W->setTitleText("水头(m)");
+
+    chart_W->addSeries(series_W); // 更新图表
+    chart_W->addAxis(axis_w, Qt::AlignBottom);
+    chart_W->addAxis(axis_W, Qt::AlignLeft);
+    series_W->attachAxis(axis_w);
+    series_W->attachAxis(axis_W);
+}
+
+
+void Randow_flow_Window::on_frequency_field_figure_x_clicked()
+{
+    chart_W->removeSeries(series_W); // 清除原有图表
+    chart_W->removeAxis(axis_W);
+    chart_W->removeAxis(axis_w);
+    series_W->clear();
+
+    QString title = "源汇项(空间随机)频域图像";
+    ui->graphicsView_W->setChart(chart_W);
+    chart_W->setTitle(title);
+    series_W->setName("源汇项频谱曲线");
+
+    flow.set_n_m();
+    Eigen::VectorXd Amplitude(flow.show_m());
+    double x = 0.0;
+    // 离散化源汇项赋值
+    for(int i = 0; i < flow.show_m(); i++){
+        Amplitude[i] = flow.source_sink_term_x(x);
+        x += flow.show_sl();
+    }
+
+    // 快速傅里叶变换振幅
+    Eigen::VectorXd Amplitude_fft = flow.fast_fourier_transfrom(Amplitude, flow.show_m());
+
+    // 找到最大振幅值，以便设置绘图坐标轴
+    double max_A = Amplitude_fft.maxCoeff();
+    ui->graphicsView_W->setChart(chart_W); // 这段必须放在前面
+    ui->textBrowser->append("最大振幅为:" + QString::number(max_A));
+
+    double w = 0.0;
+    for (double W : Amplitude_fft) {
+        series_W->append(w, W);
+        w += (1/ flow.show_xl());
+    }
+
+    // 绘图
+    axis_w->setRange(0, 1 / (2*flow.show_sl())); // 转换为取一半的频率坐标
+    axis_w->setLabelFormat("%.2f"); // 标签格式
+    axis_w->setTickCount(6);
+    axis_w->setMinorTickCount(1);
+    axis_w->setTitleText("频率(Hz)");
+
+    axis_W->setRange(0, max_A);
+    axis_W->setLabelFormat("%.5f"); // 标签格式
+    axis_W->setTickCount(6);
+    axis_W->setMinorTickCount(1);
+    axis_W->setTitleText("振幅(m)");
+
+    chart_W->addSeries(series_W); // 更新图表
+    chart_W->addAxis(axis_w, Qt::AlignBottom);
+    chart_W->addAxis(axis_W, Qt::AlignLeft);
+    series_W->attachAxis(axis_w);
+    series_W->attachAxis(axis_W);
 }
 

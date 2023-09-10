@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -197,9 +197,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_3">
       <property name="geometry">
        <rect>
-        <x>410</x>
+        <x>390</x>
         <y>0</y>
-        <width>301</width>
+        <width>321</width>
         <height>171</height>
        </rect>
       </property>
@@ -239,8 +239,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>411</width>
-        <height>161</height>
+        <width>391</width>
+        <height>171</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -299,7 +299,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>401</width>
+        <width>391</width>
         <height>171</height>
        </rect>
       </property>
@@ -332,7 +332,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="new_wave_2">
+          <widget class="QPushButton" name="new_wave_x">
            <property name="text">
             <string>手动新建一个降雨量波动</string>
            </property>
@@ -341,7 +341,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QPushButton" name="delete_wave_2">
+        <widget class="QPushButton" name="delete_wave_x">
          <property name="text">
           <string>删除上一个降雨量波动</string>
          </property>
@@ -352,9 +352,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_9">
       <property name="geometry">
        <rect>
-        <x>400</x>
+        <x>390</x>
         <y>0</y>
-        <width>301</width>
+        <width>321</width>
         <height>171</height>
        </rect>
       </property>
@@ -367,19 +367,19 @@
         </widget>
        </item>
        <item>
-        <widget class="QTextBrowser" name="textBrowser_rain_function_2"/>
+        <widget class="QTextBrowser" name="textBrowser_rain_function_x"/>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_11">
          <item>
-          <widget class="QPushButton" name="time_field_figure_2">
+          <widget class="QPushButton" name="time_field_figure_x">
            <property name="text">
             <string>查看时域图像</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="frequency_field_figure_2">
+          <widget class="QPushButton" name="frequency_field_figure_x">
            <property name="text">
             <string>查看频域图像</string>
            </property>
@@ -467,16 +467,9 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="draw_solve_reference_thickness_line_2">
+        <widget class="QPushButton" name="draw_solve_line_fft">
          <property name="text">
-          <string>绘制选定时刻的解析解线型图</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="draw_complete_2">
-         <property name="text">
-          <string>绘制数值解和解析解对比图</string>
+          <string>绘制频域图像</string>
          </property>
         </widget>
        </item>

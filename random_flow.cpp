@@ -90,7 +90,8 @@ double Random_flow_lib::show_ic(){
 
 Random_one_dimension_boussinesq::Random_one_dimension_boussinesq() : Random_flow_lib()
 {
-    we = 0.05;
+    we = 0;
+    we_x = 0;
     Sy = 0.1;
     K = 10;
     a = -1; //设置-1为默认值方便后续程序判别
@@ -121,6 +122,11 @@ void Random_one_dimension_boussinesq::pressure_diffusion_coefficient(double a_)
 void Random_one_dimension_boussinesq::source_sink_expectation(double we_)
 {
     we = we_;
+}
+
+void Random_one_dimension_boussinesq::source_sink_expectation_x(double we_)
+{
+    we_x = we_;
 }
 
 void Random_one_dimension_boussinesq::hydraulic_conductivity(double K_)
@@ -207,6 +213,48 @@ void Random_one_dimension_boussinesq::clear_list_source_sink_term()
     list_source_sink_term = list_source_sink_term_clear;
 }
 
+void Random_one_dimension_boussinesq::random_source_sink_term_x()
+{
+    // 创建一个随机数引擎
+    std::random_device rd;
+    std::mt19937 gen(rd()); // 使用Mersenne Twister引擎
+    // 定义一个随机数分布器
+    std::uniform_int_distribution<> dis(1, 51); // 生成1到50之间的随机整数
+    // 随机振幅
+    double amplitude = we_x / dis(gen);
+    // 随机周期
+    double cycle = 0.0;
+    while(true){
+        cycle = show_xl() / dis(gen); // 依据香农采样定理采样频率必须大于信号频率的两倍
+        if (cycle >= 3 * show_sl())  // 所以信号周期的随机生成必须大于采样周期的两倍，本程序取三倍
+            break;
+    }
+    set_list_source_sink_term_x(0, amplitude, cycle);
+}
+
+void Random_one_dimension_boussinesq::set_list_source_sink_term_x(double type_function, double amplitude, double cycle)
+{
+    std::vector<double> Array1 = {type_function, amplitude, cycle};
+    list_source_sink_term_x.push_back(Array1);
+}
+
+void Random_one_dimension_boussinesq::del_last_list_source_sink_term_x() //  删除源汇项列表的最后一项
+{
+    std::vector<std::vector<double>> list_source_sink_term_new(list_source_sink_term_x.size() - 1, std::vector<double>(3));
+    for (unsigned long long i = 0; i < list_source_sink_term_x.size() - 1; i++) {
+        for (unsigned long long j = 0; j < list_source_sink_term_x[i].size(); j++) {
+            list_source_sink_term_new[i][j] = list_source_sink_term_x[i][j];
+        }
+    }
+    list_source_sink_term_x = list_source_sink_term_new;
+}
+
+void Random_one_dimension_boussinesq::clear_list_source_sink_term_x()
+{
+    std::vector<std::vector<double>> list_source_sink_term_clear;
+    list_source_sink_term_x = list_source_sink_term_clear;
+}
+
 void Random_one_dimension_boussinesq::show()
 {
     for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
@@ -231,9 +279,28 @@ double Random_one_dimension_boussinesq:: source_sink_term(double t)
     return w_;
 }
 
+double Random_one_dimension_boussinesq:: source_sink_term_x(double x)
+{
+    double w_ = 0; // 遵循叠加原理随空间变换的源汇项初始值为0
+    for (unsigned long long i = 0; i < list_source_sink_term_x.size(); i++) {
+        if(list_source_sink_term_x[i][0] == 0){
+            w_ += list_source_sink_term_x[i][1] * std::sin(2 * 3.1514926 * (1 / list_source_sink_term_x[i][2]) * x);
+        }
+        else if(list_source_sink_term_x[i][0] == 1){
+            w_ += list_source_sink_term_x[i][1] * std::cos(2 * 3.1514926 * (1 / list_source_sink_term_x[i][2]) * x);
+        }
+    };
+    return w_;
+}
+
 std::vector<std::vector<double>> Random_one_dimension_boussinesq::share_list_source_sink_term()
 {
     return list_source_sink_term;
+}
+
+std::vector<std::vector<double>> Random_one_dimension_boussinesq::share_list_source_sink_term_x()
+{
+    return list_source_sink_term_x;
 }
 
 Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
@@ -276,7 +343,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 }
                 else if((i - 1) < 0 && h_l[0] == 2){
                     // 源汇项赋值
-                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - Sy / (K * show_st()) * H_ALL(k - 1, i) -
+                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - source_sink_term_x(i * show_sl()) - Sy / (K * show_st()) * H_ALL(k - 1, i) -
                                   2 * show_sl() * h_l[1] * (H_previous_iteration(0, i) + h_l[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
                     // 给位置为(i, k)处的水头赋上系数值
                     H_a(l_a, l_a) = -(H_previous_iteration(0, i + 1) + H_previous_iteration(0, i)) / (2 * show_sl() * show_sl()) -
@@ -292,7 +359,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 }
                 else if((i + 1) == show_m() && h_r[0] == 2){
                     // 源汇项赋值
-                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - Sy / (K * show_st()) * H_ALL(k - 1, i) +
+                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - source_sink_term_x(i * show_sl()) - Sy / (K * show_st()) * H_ALL(k - 1, i) +
                                   2 * show_sl() * h_r[1] * (H_previous_iteration(0, i) + h_r[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
                     // 给位置为(i, k)处的水头赋上系数值
                     H_a(l_a, l_a) = - (H_previous_iteration(0, i) + h_r[1] * 0.5 * show_sl()) / (show_sl() * show_sl()) -
@@ -303,8 +370,8 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 }
                 // 非边界部分赋值
                 else{
-                        // 源汇项赋值
-                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - Sy / (K * show_st()) * H_ALL(k - 1, i);
+                    // 源汇项赋值
+                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - source_sink_term_x(i * show_sl()) - Sy / (K * show_st()) * H_ALL(k - 1, i);
                         // 给位置为(i, k)处的水头赋上系数值
                     H_a(l_a, l_a) = -(H_previous_iteration(0 ,i + 1) + H_previous_iteration(0, i)) / (2 * show_sl() * show_sl()) -
                                     (H_previous_iteration(0, i) + H_previous_iteration(0, i - 1)) / (2 * show_sl() * show_sl()) - Sy / (K * show_st());

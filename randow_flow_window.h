@@ -52,6 +52,18 @@ private slots:
 
     void on_new_wave_clicked();
 
+    void on_doubleSpinBox_rain_x_valueChanged(double arg1);
+
+    void on_random_new_wave_x_clicked();
+
+    void on_delete_wave_x_clicked();
+
+    void on_draw_solve_line_fft_clicked();
+
+    void on_time_field_figure_x_clicked();
+
+    void on_frequency_field_figure_x_clicked();
+
 private:
     Ui::Randow_flow_Window *ui;
     Random_one_dimension_boussinesq flow; // 实例化具象潜水一维随机流
