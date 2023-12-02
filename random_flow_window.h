@@ -1,21 +1,21 @@
-#ifndef RANDOW_FLOW_WINDOW_H
-#define RANDOW_FLOW_WINDOW_H
+#ifndef RANDOM_FLOW_WINDOW_H
+#define RANDOM_FLOW_WINDOW_H
 
 #include "Random_flow.h"
 #include <QMainWindow>
 #include <QtCharts>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class Randow_flow_Window; }
+namespace Ui { class Random_flow_Window; }
 QT_END_NAMESPACE
 
-class Randow_flow_Window : public QMainWindow
+class Random_flow_Window : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    Randow_flow_Window(QWidget *parent = nullptr);
-    ~Randow_flow_Window();
+    Random_flow_Window(QWidget *parent = nullptr);
+    ~Random_flow_Window();
     void left_boundary();
     void right_boundary();
     void set_time_choose_box();
@@ -26,6 +26,7 @@ public slots:
     void get_wave_info(double cycle, double amplitue);
 
 private slots:
+    void do_mouseMovePoint(QPoint point);  // 鼠标移动监测
     void on_actionSet_fdm_triggered();
 
     void on_solve_FDM_clicked();
@@ -64,8 +65,28 @@ private slots:
 
     void on_frequency_field_figure_x_clicked();
 
+    void on_move_clicked();
+
+    void on_frame_destroyed();
+
+    void on_graphicsView_destroyed();
+
+    void on_select_clicked();
+
+    void on_reset_1_clicked();
+
+    void on_spinBox_angle_valueChanged(double arg1);
+
+    void on_doubleSpinBox_angle_valueChanged(double arg1);
+
+    void on_use_white_noise_checkBox_time_clicked();
+
+    void on_actual_expectations_clicked();
+
+    void on_power_spectral_density_figure_clicked();
+
 private:
-    Ui::Randow_flow_Window *ui;
+    Ui::Random_flow_Window *ui;
     Random_one_dimension_boussinesq flow; // 实例化具象潜水一维随机流
     double step_length;
     double step_time;
@@ -75,6 +96,7 @@ private:
     Eigen::MatrixXd solve_fdm; // 数值解求解后的矩阵存放
     QChart *chart_head;
     QLineSeries *series_head;
+    QLineSeries *series_plate;
     QValueAxis *axis_head;
     QValueAxis *axis_x;
     void create_chart_head();
@@ -83,6 +105,8 @@ private:
     QValueAxis *axis_W;
     QValueAxis *axis_w;
     void create_chart_W();
-
+    QLabel *lab_chartXY;
+    bool move_the_chart;
+    bool select_the_chart;
 };
-#endif // RANDOW_FLOW_WINDOW_H
+#endif // RANDOM_FLOW_WINDOW_H

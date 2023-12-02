@@ -4,8 +4,8 @@
 #include<string>
 #include<vector>
 #include<cmath>
+#include<QtCore>
 #include<Eigen/Dense>
-#include "fftw3.h"
 
 class Random_flow_lib
 {
@@ -57,6 +57,16 @@ private:
     int series_number_x; // 表示随机源汇项(x轴)的傅里叶级数的项数
     std::vector<std::vector<double>> list_source_sink_term_x; // 制定一个不定长二维数组来实现对源汇项(x轴)傅里叶级数的储存
     std::string name_chinese = "潜水含水层随机非稳定一维流";
+    double angle; // 底板倾斜角度
+    std::vector<double> plate; // 底板高程数组
+    std::vector<double> numberical_value_w; // 源汇项数值组
+
+protected:
+    bool use_white_noise_time;
+    bool use_white_noise_length;
+    qint64 seed; // 随机数种子
+    QRandomGenerator *rand;
+
 
 public:
     Random_one_dimension_boussinesq();
@@ -88,6 +98,16 @@ public:
     std::vector<std::vector<double>> share_list_source_sink_term_x();
     Eigen::MatrixXd solve(int how_to_solve);
     Eigen::VectorXd fast_fourier_transfrom(Eigen::MatrixXd solution, int n);
+    Eigen::VectorXd power_spectral_density(Eigen::MatrixXd solution, int n);
+
+    Eigen::MatrixXd solve_zhuiganfa(Eigen::MatrixXd a,Eigen::MatrixXd b); // 追赶法算法
+
+    void set_angle(double a); // 设置底板倾斜角度
+    void create_plate(); // 创建底板高程数组
+    double plate_elevation(double i); // 底板高程数据输出
+
+    void set_white_noise_time(int s);
+    double actual_expectations_white_noise_time(); // 白噪声实际期望值计算
 
 
 

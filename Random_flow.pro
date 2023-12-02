@@ -15,20 +15,22 @@ LIBS += -L"F:\Qt_project\fftw-3.3.5-dll64" -lfftw3-3
 SOURCES += \
     main.cpp \
     random_flow.cpp \
-    randow_flow_window.cpp \
+    random_flow_window.cpp \
     set_fdm.cpp \
     set_hydrogeological_parameter.cpp \
-    set_new_wave.cpp
+    set_new_wave.cpp \
+    tchartview.cpp
 
 HEADERS += \
     Random_flow.h \
-    randow_flow_window.h \
+    random_flow_window.h \
     set_fdm.h \
     set_hydrogeological_parameter.h \
-    set_new_wave.h
+    set_new_wave.h \
+    tchartview.h
 
 FORMS += \
-    randow_flow_window.ui \
+    random_flow_window.ui \
     set_fdm.ui \
     set_hydrogeological_parameter.ui \
     set_new_wave.ui

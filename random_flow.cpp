@@ -3,9 +3,13 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <QtCore/qrandom.h>
 #include <random>
+#include <QRandomGenerator>
+#include <QDateTime>
 #include <Eigen/Dense>
 #include "fftw3.h"
+#include<stdlib.h>
 
 Random_flow_lib::Random_flow_lib()
 {
@@ -102,11 +106,17 @@ Random_one_dimension_boussinesq::Random_one_dimension_boussinesq() : Random_flow
     h_r[0] = 2.0;
     h_r[1] = 0;
     series_number = 1;
+    angle = 0;
+
+    use_white_noise_time = false;
+    use_white_noise_length = false;
+    seed = 0;
+    rand = new QRandomGenerator(seed);
 }
 
 Random_one_dimension_boussinesq::~Random_one_dimension_boussinesq()
 {
-
+    delete rand;
 }
 
 void Random_one_dimension_boussinesq::reference_thickness(double ha_)
@@ -176,10 +186,12 @@ void Random_one_dimension_boussinesq::random_source_sink_term()
     // 创建一个随机数引擎
     std::random_device rd;
     std::mt19937 gen(rd()); // 使用Mersenne Twister引擎
-    // 定义一个随机数分布器
+    // 定义三个随机数分布器
     std::uniform_int_distribution<> dis(1, 51); // 生成1到50之间的随机整数
+    std::uniform_real_distribution<> dis_1(0, we); // 生成0~we的随机小数
+    std::uniform_int_distribution<> dis_(0, 1); // 生成0或1的随机整数
     // 随机振幅
-    double amplitude = we / dis(gen);
+    double amplitude = dis_1(gen);
     // 随机周期
     double cycle = 0.0;
     while(true){
@@ -187,7 +199,7 @@ void Random_one_dimension_boussinesq::random_source_sink_term()
         if (cycle >= 3 * show_st())  // 所以信号周期的随机生成必须大于采样周期的两倍，本程序取三倍
             break;
     }
-    set_list_source_sink_term(0, amplitude, cycle);
+    set_list_source_sink_term(dis_(gen), amplitude, cycle);
 }
 
 void Random_one_dimension_boussinesq::set_list_source_sink_term(double type_function, double amplitude, double cycle)
@@ -218,10 +230,12 @@ void Random_one_dimension_boussinesq::random_source_sink_term_x()
     // 创建一个随机数引擎
     std::random_device rd;
     std::mt19937 gen(rd()); // 使用Mersenne Twister引擎
-    // 定义一个随机数分布器
+    // 定义两个随机数分布器
     std::uniform_int_distribution<> dis(1, 51); // 生成1到50之间的随机整数
+    std::uniform_real_distribution<> dis_1(0, we_x); // 生成0~we的随机小数
+    std::uniform_int_distribution<> dis_(0, 1); // 生成0或1的随机整数
     // 随机振幅
-    double amplitude = we_x / dis(gen);
+    double amplitude = dis_1(gen);
     // 随机周期
     double cycle = 0.0;
     while(true){
@@ -229,7 +243,7 @@ void Random_one_dimension_boussinesq::random_source_sink_term_x()
         if (cycle >= 3 * show_sl())  // 所以信号周期的随机生成必须大于采样周期的两倍，本程序取三倍
             break;
     }
-    set_list_source_sink_term_x(0, amplitude, cycle);
+    set_list_source_sink_term_x(dis_(gen), amplitude, cycle);
 }
 
 void Random_one_dimension_boussinesq::set_list_source_sink_term_x(double type_function, double amplitude, double cycle)
@@ -267,21 +281,29 @@ void Random_one_dimension_boussinesq::show()
 
 double Random_one_dimension_boussinesq:: source_sink_term(double t)
 {
-    double w_ = we;
-    for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
-        if(list_source_sink_term[i][0] == 0){
-            w_ += list_source_sink_term[i][1] * std::sin(2 * 3.1514926 * (1 / list_source_sink_term[i][2]) * t);
-        }
-        else if(list_source_sink_term[i][0] == 1){
-            w_ += list_source_sink_term[i][1] * std::cos(2 * 3.1514926 * (1 / list_source_sink_term[i][2]) * t);
-        }
-    };
-    return w_;
+    if(use_white_noise_time == true)
+    {
+        return numberical_value_w[t/show_st()];
+    }
+    else
+    {
+        double w_ = we;
+        for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
+            if(list_source_sink_term[i][0] == 0){
+                w_ += list_source_sink_term[i][1] * std::sin(2 * 3.1514926 * (1 / list_source_sink_term[i][2]) * t);
+            }
+            else if(list_source_sink_term[i][0] == 1){
+                w_ += list_source_sink_term[i][1] * std::cos(2 * 3.1514926 * (1 / list_source_sink_term[i][2]) * t);
+            }
+        };
+        return w_;
+    }
+
 }
 
 double Random_one_dimension_boussinesq:: source_sink_term_x(double x)
 {
-    double w_ = 0; // 遵循叠加原理随空间变换的源汇项初始值为0
+    double w_ = we_x; // 遵循叠加原理"随空间变换的源汇项初始值为0"
     for (unsigned long long i = 0; i < list_source_sink_term_x.size(); i++) {
         if(list_source_sink_term_x[i][0] == 0){
             w_ += list_source_sink_term_x[i][1] * std::sin(2 * 3.1514926 * (1 / list_source_sink_term_x[i][2]) * x);
@@ -310,12 +332,14 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
         a = K / Sy;
     }
     set_n_m(); // 设置X,T轴差分点数
+    create_plate(); // 设置底板高程数组
     Eigen::MatrixXd H_ALL(show_n(), show_m());//创建一个矩阵，用于存放各个差分位置的水头值
     H_ALL.setZero();
     for(int k = 0; k < show_n(); k++) //对行(时间轴)进行扫描
     {
         int iteration_times = 0;  // 迭代运算次数计数
-        Eigen::MatrixXd H_previous_iteration(1, show_m());
+        Eigen::MatrixXd H_previous_iteration(1, show_m()); // 前次迭代的水头厚度(h-z)
+        Eigen::MatrixXd H_previous_iteration_1(1, show_m()); // 前次迭代的水头高h
         H_previous_iteration.setZero();
         Eigen::MatrixXd H(show_m(), 1);
         H.setZero();
@@ -343,7 +367,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 }
                 else if((i - 1) < 0 && h_l[0] == 2){
                     // 源汇项赋值
-                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - source_sink_term_x(i * show_sl()) - Sy / (K * show_st()) * H_ALL(k - 1, i) -
+                    H_b(l_a, 0) = - source_sink_term(k * show_st()) / K - source_sink_term_x(i * show_sl()) / K - Sy / (K * show_st()) * H_ALL(k - 1, i) -
                                   2 * show_sl() * h_l[1] * (H_previous_iteration(0, i) + h_l[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
                     // 给位置为(i, k)处的水头赋上系数值
                     H_a(l_a, l_a) = -(H_previous_iteration(0, i + 1) + H_previous_iteration(0, i)) / (2 * show_sl() * show_sl()) -
@@ -359,7 +383,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 }
                 else if((i + 1) == show_m() && h_r[0] == 2){
                     // 源汇项赋值
-                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - source_sink_term_x(i * show_sl()) - Sy / (K * show_st()) * H_ALL(k - 1, i) +
+                    H_b(l_a, 0) = - source_sink_term(k * show_st()) / K - source_sink_term_x(i * show_sl()) / K - Sy / (K * show_st()) * H_ALL(k - 1, i) +
                                   2 * show_sl() * h_r[1] * (H_previous_iteration(0, i) + h_r[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
                     // 给位置为(i, k)处的水头赋上系数值
                     H_a(l_a, l_a) = - (H_previous_iteration(0, i) + h_r[1] * 0.5 * show_sl()) / (show_sl() * show_sl()) -
@@ -371,7 +395,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 // 非边界部分赋值
                 else{
                     // 源汇项赋值
-                    H_b(l_a, 0) = - source_sink_term(k * show_st()) - source_sink_term_x(i * show_sl()) - Sy / (K * show_st()) * H_ALL(k - 1, i);
+                    H_b(l_a, 0) = - source_sink_term(k * show_st()) / K - source_sink_term_x(i * show_sl()) / K - Sy / (K * show_st()) * H_ALL(k - 1, i);
                         // 给位置为(i, k)处的水头赋上系数值
                     H_a(l_a, l_a) = -(H_previous_iteration(0 ,i + 1) + H_previous_iteration(0, i)) / (2 * show_sl() * show_sl()) -
                                     (H_previous_iteration(0, i) + H_previous_iteration(0, i - 1)) / (2 * show_sl() * show_sl()) - Sy / (K * show_st());
@@ -389,8 +413,8 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
             else if (how_to_solve == 2){ // 使用QR分解法进行求解
                 H = H_a.householderQr().solve(H_b);
             }
-            else if (how_to_solve == 3){ //使用Cholesky分解法进行求解
-                H = H_a.ldlt().solve(H_b);
+            else if (how_to_solve == 3){ //使用追赶法进行求解
+                H = solve_zhuiganfa(H_a, H_b);
             }
             if(k == 0){  // 第零时刻不参与迭代计算
                 break;
@@ -398,7 +422,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
             // 判断是否满足精度需求
             int precision = 0;
             for(int u = 0; u < show_m(); u++){
-                if (abs(H_previous_iteration(0, u) - H(u, 0)) > 0.001){
+                if (abs(H_previous_iteration_1(0, u) - H(u, 0)) > 0.001){
                     precision = 1;
                 }
             }
@@ -407,8 +431,12 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
             }
             else{
                 iteration_times += 1;
-                H_previous_iteration.row(0) = H.col(0);
-            }
+                H_previous_iteration_1.row(0) = H.col(0);
+                for(int o = 0;o < show_m(); o++){
+                    H_previous_iteration.row(0)(o) = H.col(0)(o) - plate_elevation(o);
+                }
+                }
+
             if(iteration_times > 100)
             break;
         }
@@ -436,7 +464,7 @@ Eigen::VectorXd Random_one_dimension_boussinesq::fast_fourier_transfrom(Eigen::M
     for (int i = 0; i < N; i++) {
         Amplitude(i) = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]); // 取复数的绝对值得到振幅
         if(i == 0){
-            Amplitude(i) =  0;
+            Amplitude(i) =  Amplitude(i) / n; // 转换为真实振幅0;
         }
         else{
             Amplitude(i) = Amplitude(i) / (n / 2); // 转换为真实振幅
@@ -447,11 +475,107 @@ Eigen::VectorXd Random_one_dimension_boussinesq::fast_fourier_transfrom(Eigen::M
     fftw_free(out);
     return Amplitude;
 }
-//int main() {
-//    Random_one_dimension_boussinesq flow;
-//    flow.set_list_source_sink_term(1,0.06,5);
-//    Eigen::MatrixXd h = flow.solve(1);
-//    std::cout<<h;
 
-//    return 0;
-//}
+Eigen::VectorXd Random_one_dimension_boussinesq::power_spectral_density(Eigen::MatrixXd solution, int n)
+{
+    set_n_m();
+    // 创建输出数组，用于存储FFT结果
+    fftw_complex *out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * n);
+    // 创建FFT计划
+    fftw_plan plan = fftw_plan_dft_r2c_1d(n, solution.data(), out, FFTW_ESTIMATE);
+    // 执行FFT计算
+    fftw_execute(plan);
+
+    // 归一化和取一半处理
+    int N = std::round(n / 2);
+    Eigen::VectorXd Amplitude(N); // 用于功率谱密度的振幅
+    for (int i = 0; i < N; i++) {
+        Amplitude(i) = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]); // 取复数的绝对值得到振幅
+        if(i == 0){
+            Amplitude(i) =  (Amplitude(i) / n) * (Amplitude(i) / n) / show_tl(); // 转换为真实振幅0;Sx[k]=(1/N)∣X[k]∣^2
+        }
+        else{
+            Amplitude(i) = (Amplitude(i) / (n / 2)) * (Amplitude(i) / (n / 2)) / show_tl(); // 转换为真实振幅的模的平方
+        }
+    }
+    // 销毁计划
+    fftw_destroy_plan(plan);
+    fftw_free(out);
+    return Amplitude;
+}
+
+Eigen::MatrixXd Random_one_dimension_boussinesq::solve_zhuiganfa(Eigen::MatrixXd a,Eigen::MatrixXd b)
+{
+    Eigen::MatrixXd x(show_m(), 1); // 解值矩阵
+    double *BB,*GG;
+    int i;
+    //为系数数组分配内存空间
+    BB=new double[show_m()];
+    GG=new double[show_m()];
+    //系数追踪
+    BB[0]=a(0,0);
+    GG[0]=b(0)/BB[0];
+    for(i=1;i<show_m();i++)
+    {
+        BB[i]=a(i,i)-a(i, i-1)*a(i-1, i)/BB[i-1];
+        GG[i]=(b(i)-a(i, i-1)*GG[i-1])/BB[i];
+    }
+    //求解未知数
+    for(i=(show_m()-1);i>=0;i--)
+    {
+        if(i==(show_m()-1))x(i)=GG[i];
+        else  x(i)=GG[i]-a(i, i+1)*x(i+1)/BB[i];
+    }
+    delete[] BB;
+    delete[] GG;
+    return x;
+}
+
+void Random_one_dimension_boussinesq::set_angle(double a)
+{
+    angle = a;
+}
+
+void Random_one_dimension_boussinesq::create_plate()
+{
+    plate.clear();
+    double m = show_m();
+    int sl = show_sl();
+    for(int i = 0;i < m;i++)
+    {
+        plate.emplace_back(tan(angle * 3.1415926 / 180) * i * sl);
+    }
+}
+
+double Random_one_dimension_boussinesq::plate_elevation(double i)
+{
+    return plate[i];
+}
+
+void Random_one_dimension_boussinesq::set_white_noise_time(int s) // 设置是否启用白噪声模式
+{
+    if(s==0) use_white_noise_time = false;
+    else
+    {
+        set_n_m();
+        delete rand;
+        numberical_value_w.clear();
+        seed = QDateTime::currentSecsSinceEpoch();
+        rand = new QRandomGenerator(seed); // 删了旧的再定义一个新的
+        use_white_noise_time = true;
+        for(int i=0;i<show_n();i++)
+        {
+            numberical_value_w.emplace_back(rand->bounded(100 * we));// 使用QT随机数引擎生成0-2倍的源汇项期望的平稳随机数（白噪声）
+        }
+    }
+}
+
+double Random_one_dimension_boussinesq::actual_expectations_white_noise_time()
+{
+    double expectations = 0;
+    for(double e : numberical_value_w)
+    {
+        expectations += e;
+    }
+    return expectations / show_n();
+}

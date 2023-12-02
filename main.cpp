@@ -1,4 +1,4 @@
-#include "randow_flow_window.h"
+#include "random_flow_window.h"
 
 #include <QApplication>
 #include <QLocale>
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    Randow_flow_Window w;
+    Random_flow_Window w;
     w.show();
     return a.exec();
 }

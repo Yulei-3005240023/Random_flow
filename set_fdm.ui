@@ -103,7 +103,7 @@
     <item>
      <widget class="QRadioButton" name="Cholesky">
       <property name="text">
-       <string>Cholesky分解法</string>
+       <string>追赶法</string>
       </property>
      </widget>
     </item>
