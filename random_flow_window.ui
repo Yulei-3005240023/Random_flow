@@ -42,7 +42,7 @@
      <bool>false</bool>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -203,7 +203,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox_ic"/>
+        <widget class="QDoubleSpinBox" name="doubleSpinBox_ic">
+         <property name="maximum">
+          <double>9999.989999999999782</double>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -631,7 +635,7 @@
         <x>480</x>
         <y>10</y>
         <width>206</width>
-        <height>80</height>
+        <height>121</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -650,6 +654,19 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QPushButton" name="amplitude_complete_figure">
+      <property name="geometry">
+       <rect>
+        <x>710</x>
+        <y>40</y>
+        <width>171</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>功率谱振幅对比图</string>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_6">

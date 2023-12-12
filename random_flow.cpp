@@ -9,7 +9,9 @@
 #include <QDateTime>
 #include <Eigen/Dense>
 #include "fftw3.h"
-#include<stdlib.h>
+#include <stdlib.h>
+#include <time.h>
+#include <complex.h>
 
 Random_flow_lib::Random_flow_lib()
 {
@@ -88,7 +90,8 @@ void Random_flow_lib::initial_condition(double initial_condition)
     ic = initial_condition;
 }
 
-double Random_flow_lib::show_ic(){
+double Random_flow_lib::show_ic()
+{
     return ic;
 }
 
@@ -117,6 +120,11 @@ Random_one_dimension_boussinesq::Random_one_dimension_boussinesq() : Random_flow
 Random_one_dimension_boussinesq::~Random_one_dimension_boussinesq()
 {
     delete rand;
+}
+
+void Random_one_dimension_boussinesq::a_()
+{
+    a = (show_ic() * K) / Sy;
 }
 
 void Random_one_dimension_boussinesq::reference_thickness(double ha_)
@@ -504,6 +512,38 @@ Eigen::VectorXd Random_one_dimension_boussinesq::power_spectral_density(Eigen::M
     return Amplitude;
 }
 
+Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm(Eigen::MatrixXd solution, int l) // l代表位置
+{
+    Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(solution.col(l), show_n());// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
+    Eigen::VectorXd Amplitude_w(show_n());
+    double t = 0.0;
+    // 离散化源汇项赋值
+    for(int i = 0; i < show_n(); i++){
+        Amplitude_w[i] = source_sink_term(t);
+        t += show_st();
+    }
+    Eigen::VectorXd Amplitude_w_fft = fast_fourier_transfrom(Amplitude_w, show_n());
+    Eigen::VectorXd Amplitude_fdm(show_n() / 2);
+    //std::cout<<"sbwycwds"<<std::endl;
+    for(int j = 0; j < (show_n() / 2); j++){
+        Amplitude_fdm[j] = fabs(Amplitude_h_fft[j] / Amplitude_w_fft[j]);
+    }
+    return Amplitude_fdm;
+}
+
+Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_analyze()
+{
+    a_();
+    Eigen::VectorXd Amplitude_analyze(show_n() / 2);
+    double e = 0.0;
+    for(int i = 0; i < (show_n() / 2); i++){
+        e = A(i * (1 / show_tl()));
+        Amplitude_analyze[i] = e;
+    }
+    Amplitude_analyze[0] = Amplitude_analyze[1]; // 把不存在的0的位置给替换掉
+    return Amplitude_analyze;
+}
+
 Eigen::MatrixXd Random_one_dimension_boussinesq::solve_zhuiganfa(Eigen::MatrixXd a,Eigen::MatrixXd b)
 {
     Eigen::MatrixXd x(show_m(), 1); // 解值矩阵
@@ -529,6 +569,33 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_zhuiganfa(Eigen::MatrixXd
     delete[] BB;
     delete[] GG;
     return x;
+}
+
+std::complex<double> Random_one_dimension_boussinesq::M(double x, double w, double l)
+{
+    std::complex<double>r1(0, w/a);
+    std::complex<double>r2(0, w/a);
+    r1 = sqrt(r1);
+    r2 = conj(r1); // 共轭复数
+    std::complex<double> m;
+    m = (r1 *exp(r1 * l)* exp(r2 * x) - r2 *exp(r2 * l)* exp(r1 * x)) / (r1 *exp(r1 * l) -  r2 *exp(r2 * l));
+    return m;
+}
+
+double Random_one_dimension_boussinesq::A(double w){
+    std::complex<double> z(0.0, w * show_xl() * show_xl() / a);
+    std::complex<double> sqrt_z = std::sqrt(z);
+    // 计算双曲余弦的反函数
+    std::complex<double> acosh_z = std::acosh(sqrt_z);
+    double result = (show_xl() * show_xl() / (a * Sy)) * abs((a / (w * show_xl() * show_xl())) *acosh_z);
+    //std::complex<double>a_com(0, 1/(w * Sy));
+    //std::complex<double>m = M(x, w, l);
+    //std::complex<double>m_(m.real() - 1, m.imag());
+    //cout<<m_<<endl;
+    //double Amp = fabs(a_com * (m_));
+    //return Amp;
+    return result;
+
 }
 
 void Random_one_dimension_boussinesq::set_angle(double a)
@@ -558,14 +625,16 @@ void Random_one_dimension_boussinesq::set_white_noise_time(int s) // 设置是�
     else
     {
         set_n_m();
-        delete rand;
         numberical_value_w.clear();
-        seed = QDateTime::currentSecsSinceEpoch();
-        rand = new QRandomGenerator(seed); // 删了旧的再定义一个新的
+        // 创建一个随机数引擎
+        double t0 = time(0); // 使用当前系统时间戳为随机数种子
+        std::mt19937 gen(t0); // 使用Mersenne Twister引擎
+        // 定义两个随机数分布器
+        std::uniform_real_distribution<> dis(0, 2 * we); // 生成-1 * we ~ 2 * we均匀分布的随机小数
         use_white_noise_time = true;
         for(int i=0;i<show_n();i++)
         {
-            numberical_value_w.emplace_back(rand->bounded(100 * we));// 使用QT随机数引擎生成0-2倍的源汇项期望的平稳随机数（白噪声）
+            numberical_value_w.emplace_back(dis(gen));// 白噪声数值填充
         }
     }
 }

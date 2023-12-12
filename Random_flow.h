@@ -71,6 +71,8 @@ protected:
 public:
     Random_one_dimension_boussinesq();
     ~Random_one_dimension_boussinesq();
+
+    void a_(); // 计算压力扩散系数
     void reference_thickness(double ha_);
     void pressure_diffusion_coefficient(double a_);
     void source_sink_expectation(double we_);
@@ -97,10 +99,14 @@ public:
     std::vector<std::vector<double>> share_list_source_sink_term();
     std::vector<std::vector<double>> share_list_source_sink_term_x();
     Eigen::MatrixXd solve(int how_to_solve);
-    Eigen::VectorXd fast_fourier_transfrom(Eigen::MatrixXd solution, int n);
-    Eigen::VectorXd power_spectral_density(Eigen::MatrixXd solution, int n);
+    Eigen::VectorXd fast_fourier_transfrom(Eigen::MatrixXd solution, int n); // 快速傅里叶变换代码
+    Eigen::VectorXd power_spectral_density(Eigen::MatrixXd solution, int n); // 功率谱密度变换代码
+    Eigen::VectorXd amplitude_complete_fdm(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解
+    Eigen::VectorXd amplitude_complete_analyze(); // 功率谱振幅比-解析解
 
     Eigen::MatrixXd solve_zhuiganfa(Eigen::MatrixXd a,Eigen::MatrixXd b); // 追赶法算法
+    std::complex<double> M(double x, double w, double l); // 解析解中的M
+    double A(double w); // 解析解，返回给定频率的功率谱振幅比值
 
     void set_angle(double a); // 设置底板倾斜角度
     void create_plate(); // 创建底板高程数组

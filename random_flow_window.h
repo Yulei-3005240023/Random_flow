@@ -21,6 +21,7 @@ public:
     void set_time_choose_box();
     void set_location_choose_box();
     void solve(); // 数值解计算函数
+    void clear_chart_head(); // 对于绘制水头图标进行清除上一次绘制曲线的操作
 
 public slots:
     void get_wave_info(double cycle, double amplitue);
@@ -85,6 +86,8 @@ private slots:
 
     void on_power_spectral_density_figure_clicked();
 
+    void on_amplitude_complete_figure_clicked();
+
 private:
     Ui::Random_flow_Window *ui;
     Random_one_dimension_boussinesq flow; // 实例化具象潜水一维随机流
@@ -97,6 +100,7 @@ private:
     QChart *chart_head;
     QLineSeries *series_head;
     QLineSeries *series_plate;
+    QLineSeries *series_analyze;
     QValueAxis *axis_head;
     QValueAxis *axis_x;
     void create_chart_head();

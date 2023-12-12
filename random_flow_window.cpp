@@ -21,6 +21,7 @@ Random_flow_Window::Random_flow_Window(QWidget *parent)
     chart_head = new QChart();
     series_head = new QLineSeries();
     series_plate = new QLineSeries();
+    series_analyze = new QLineSeries();
     axis_head = new QValueAxis();
     axis_x = new QValueAxis();
     create_chart_head();
@@ -51,6 +52,7 @@ Random_flow_Window::~Random_flow_Window()
     delete chart_head;
     delete series_head;
     delete series_plate;
+    delete series_analyze;
     delete axis_head;
     delete axis_x;
     delete chart_W;
@@ -186,6 +188,18 @@ void Random_flow_Window::solve()
     ui->textBrowser->append("计算完毕");
     set_time_choose_box();
     set_location_choose_box();
+}
+
+void Random_flow_Window::clear_chart_head()
+{
+    chart_head->removeSeries(series_head); // 清除原有图表
+    chart_head->removeSeries(series_plate);
+    chart_head->removeAxis(axis_x);
+    chart_head->removeAxis(axis_head);
+    chart_head->removeSeries(series_analyze);
+    series_analyze->clear();
+    series_head->clear();
+    series_plate->clear();
 }
 
 void Random_flow_Window::get_wave_info(double cycle, double amplitue) // 主窗口获得波动信息的槽函数
@@ -335,12 +349,7 @@ void Random_flow_Window::on_delete_wave_clicked()
 
 void Random_flow_Window::on_draw_solve_line_clicked()
 {
-    chart_head->removeSeries(series_head); // 清除原有图表
-    chart_head->removeSeries(series_plate);
-    chart_head->removeAxis(axis_x);
-    chart_head->removeAxis(axis_head);
-    series_head->clear();
-    series_plate->clear();
+    clear_chart_head();
 
     QString title = "数值解，空间差分步长为" +QString::number(flow.show_sl()) + "时间差分步长为" + QString::number(flow.show_st()) + "，绘图时刻为第" + QString::number(ui->spinBox_time->value()) + "时刻。";
     ui->graphicsView->setChart(chart_head);
@@ -389,11 +398,7 @@ void Random_flow_Window::on_draw_solve_line_clicked()
 
 void Random_flow_Window::on_draw_solve_line_location_clicked()
 {
-    chart_head->removeSeries(series_head); // 清除原有图表
-    chart_head->removeSeries(series_plate);
-    chart_head->removeAxis(axis_x);
-    chart_head->removeAxis(axis_head);
-    series_head->clear();
+    clear_chart_head();
 
     QString title = "数值解，空间差分步长为" +QString::number(flow.show_sl()) + "时间差分步长为" + QString::number(flow.show_st()) + "，绘图位置为第" + QString::number(ui->spinBox_X->value()) + "位置。";
     ui->graphicsView->setChart(chart_head);
@@ -513,7 +518,7 @@ void Random_flow_Window::on_frequency_field_figure_clicked()
     axis_w->setLabelFormat("%.2f"); // 标签格式
     axis_w->setTickCount(6);
     axis_w->setMinorTickCount(1);
-    axis_w->setTitleText("频率(Hz)");
+    axis_w->setTitleText("频率(次/天)");
 
     axis_W->setRange(0, max_A);
     axis_W->setLabelFormat("%.5f"); // 标签格式
@@ -530,11 +535,7 @@ void Random_flow_Window::on_frequency_field_figure_clicked()
 
 void Random_flow_Window::on_draw_solve_line_location_fft_clicked()
 {
-    chart_head->removeSeries(series_head); // 清除原有图表
-    chart_head->removeSeries(series_plate);
-    chart_head->removeAxis(axis_x);
-    chart_head->removeAxis(axis_head);
-    series_head->clear();
+    clear_chart_head();
 
     QString title = "数值解，空间差分步长为" +QString::number(flow.show_sl()) + "时间差分步长为" + QString::number(flow.show_st()) + "，绘图位置为第" + QString::number(ui->spinBox_X->value()) + "位置。";
     ui->graphicsView->setChart(chart_head);
@@ -556,7 +557,7 @@ void Random_flow_Window::on_draw_solve_line_location_fft_clicked()
     axis_x->setLabelFormat("%.2f"); // 标签格式
     axis_x->setTickCount(11);
     axis_x->setMinorTickCount(1);
-    axis_x->setTitleText("频率(Hz)");
+    axis_x->setTitleText("频率(次/天)");
 
     axis_head->setRange(0, max_A);
     axis_head->setLabelFormat("%.4f"); // 标签格式
@@ -612,11 +613,7 @@ void Random_flow_Window::on_delete_wave_x_clicked()
 
 void Random_flow_Window::on_draw_solve_line_fft_clicked()
 {
-    chart_head->removeSeries(series_head); // 清除原有图表
-    chart_head->removeSeries(series_plate);
-    chart_head->removeAxis(axis_x);
-    chart_head->removeAxis(axis_head);
-    series_head->clear();
+    clear_chart_head();
 
     QString title = "数值解，空间差分步长为" +QString::number(flow.show_sl()) + "时间差分步长为" + QString::number(flow.show_st()) + "，绘图时刻为第" + QString::number(ui->spinBox_time->value()) + "时刻。";
     ui->graphicsView->setChart(chart_head);
@@ -638,7 +635,7 @@ void Random_flow_Window::on_draw_solve_line_fft_clicked()
     axis_x->setLabelFormat("%.2f"); // 标签格式
     axis_x->setTickCount(11);
     axis_x->setMinorTickCount(1);
-    axis_x->setTitleText("频率(Hz)");
+    axis_x->setTitleText("频率(次/天)");
 
     axis_head->setRange(0, max_A);
     axis_head->setLabelFormat("%.4f"); // 标签格式
@@ -737,7 +734,7 @@ void Random_flow_Window::on_frequency_field_figure_x_clicked()
     axis_w->setLabelFormat("%.2f"); // 标签格式
     axis_w->setTickCount(6);
     axis_w->setMinorTickCount(1);
-    axis_w->setTitleText("频率(Hz)");
+    axis_w->setTitleText("频率(次/天)");
 
     axis_W->setRange(0, max_A);
     axis_W->setLabelFormat("%.5f"); // 标签格式
@@ -892,7 +889,7 @@ void Random_flow_Window::on_power_spectral_density_figure_clicked()
     axis_w->setLabelFormat("%.2f"); // 标签格式
     axis_w->setTickCount(6);
     axis_w->setMinorTickCount(1);
-    axis_w->setTitleText("频率(Hz)");
+    axis_w->setTitleText("频率(次/天)");
 
     axis_W->setRange(0, max_A);
     axis_W->setLabelFormat("%.5f"); // 标签格式
@@ -905,5 +902,55 @@ void Random_flow_Window::on_power_spectral_density_figure_clicked()
     chart_W->addAxis(axis_W, Qt::AlignLeft);
     series_W->attachAxis(axis_w);
     series_W->attachAxis(axis_W);
+}
+
+
+void Random_flow_Window::on_amplitude_complete_figure_clicked()
+{
+    clear_chart_head();
+
+    QString title = "功率谱振幅比值，空间差分步长为" +QString::number(flow.show_sl()) + "时间差分步长为" + QString::number(flow.show_st()) + "，绘图位置为第" + QString::number(ui->spinBox_X->value()) + "位置。";
+    ui->graphicsView->setChart(chart_head);
+    chart_head->setTitle(title);
+    series_head->setName("功率谱振幅比值: 数值解");
+    series_analyze->setName("功率谱振幅比值: 解析解");
+    int a = ui->spinBox_X->value();
+    double x = 0.0;
+    double w = 0.0;
+    Eigen::VectorXd amplitude_complete_fdm = flow.amplitude_complete_fdm(solve_fdm, a);
+    Eigen::VectorXd amplitude_complete_analyze = flow.amplitude_complete_analyze();
+
+    // 找到最大振幅值，以便设置绘图坐标轴
+    //double max_A = amplitude_complete_fdm.maxCoeff();
+    double max_B = amplitude_complete_analyze.maxCoeff();
+    for (double A_fdm : amplitude_complete_fdm) {
+        series_head->append(x,A_fdm);
+        x += (1/ flow.show_tl());
+    }
+    for (double A_analyze : amplitude_complete_analyze) {
+        series_analyze->append(w, A_analyze);
+        w += (1/ flow.show_tl());
+    }
+
+    axis_x->setRange(0, 1 / (2*flow.show_st()));
+    axis_x->setLabelFormat("%.2f"); // 标签格式
+    axis_x->setTickCount(11);
+    axis_x->setMinorTickCount(1);
+    axis_x->setTitleText("频率(次/天)");
+
+    //if(max_A>max_B)axis_head->setRange(0, max_A);
+    //else
+    axis_head->setRange(0, max_B);
+    axis_head->setLabelFormat("%.4f"); // 标签格式
+    axis_head->setTickCount(11);
+    axis_head->setMinorTickCount(1);
+    axis_head->setTitleText("振幅比");
+
+    chart_head->addSeries(series_head); // 更新图表
+    chart_head->addSeries(series_analyze);
+    chart_head->addAxis(axis_x, Qt::AlignBottom);
+    chart_head->addAxis(axis_head, Qt::AlignLeft);
+    series_head->attachAxis(axis_x);
+    series_head->attachAxis(axis_head);
 }
 
