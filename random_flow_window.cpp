@@ -24,6 +24,7 @@ Random_flow_Window::Random_flow_Window(QWidget *parent)
     series_analyze = new QLineSeries();
     axis_head = new QValueAxis();
     axis_x = new QValueAxis();
+    logAxisX = new QLogValueAxis();
     create_chart_head();
     chart_W = new QChart();
     series_W = new QLineSeries();
@@ -44,6 +45,18 @@ Random_flow_Window::Random_flow_Window(QWidget *parent)
     lab_chartXY = new QLabel("Chart X=, Y=", this);  // 状态栏显示坐标
     ui->statusbar->addWidget(lab_chartXY);
     connect(ui->graphicsView, SIGNAL(mouseMovePoint(QPoint)), this, SLOT(do_mouseMovePoint(QPoint)));
+
+    // 蒙特卡洛多线程部分定义
+    //MC_amplitude_complete_fdm = new Eigen::VectorXd;
+    MCThread_uniform_wt_amp1 = new MCThread_uniform_wt_amp(this);
+    connect(MCThread_uniform_wt_amp1, &MCThread_uniform_wt_amp::which_time, this, &Random_flow_Window::get_MC_times);
+    connect(MCThread_uniform_wt_amp1, &MCThread_uniform_wt_amp::MC_amp_fdm, this, &Random_flow_Window::get_MC_amplitude_complete_fdm);
+    connect(MCThread_uniform_wt_amp1, &MCThread_uniform_wt_amp::finished, this, &Random_flow_Window::get_MC_finished);
+
+    MCThread_uniform_wt_amp2 = new MCThread_uniform_wt_amp(this);
+    connect(MCThread_uniform_wt_amp2, &MCThread_uniform_wt_amp::which_time, this, &Random_flow_Window::get_MC_times_1);
+    connect(MCThread_uniform_wt_amp2, &MCThread_uniform_wt_amp::MC_amp_fdm, this, &Random_flow_Window::get_MC_amplitude_complete_fdm_1);
+    connect(MCThread_uniform_wt_amp2, &MCThread_uniform_wt_amp::finished, this, &Random_flow_Window::get_MC_finished_1);
 }
 
 Random_flow_Window::~Random_flow_Window()
@@ -59,6 +72,8 @@ Random_flow_Window::~Random_flow_Window()
     delete series_W;
     delete axis_W;
     delete axis_w;
+    delete logAxisX;
+    //delete MC_amplitude_complete_fdm;
     std::cout<<"game is over"<<std::endl;
 }
 
@@ -196,10 +211,46 @@ void Random_flow_Window::clear_chart_head()
     chart_head->removeSeries(series_plate);
     chart_head->removeAxis(axis_x);
     chart_head->removeAxis(axis_head);
+    chart_head->removeAxis(logAxisX);
     chart_head->removeSeries(series_analyze);
     series_analyze->clear();
     series_head->clear();
     series_plate->clear();
+}
+
+void Random_flow_Window::save_the_data(QString filename, int model){
+    QFile afile(filename);
+    if(!afile.open(QIODevice::WriteOnly | QIODevice::Text)){ // 以只写模式打开
+        qDebug() << "无法打开文件";
+    }
+    QTextStream astream(&afile);
+    if(model == 0){ // 写入数值解数据
+        for(double h:solve_fdm.col(flow.show_m() - 1)){
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
+        };
+    }
+    else if (model == 1){ // 写入蒙特卡洛数据
+        for(double h:MC_amplitude_complete_fdm){
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
+        }
+    }
+    else if (model == 2){ // 写入解析解数据
+        Eigen::MatrixXd solve_as1 = flow.solve_an_wt();
+        for(double h:solve_as1.col(flow.show_m() - 1)){
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
+        }
+    }
+    else if(model == 3){ // 写入解析解数据(振幅比)
+        Eigen::VectorXd amplitude_complete_analyze = flow.amplitude_complete_analyze();
+        for(double h:amplitude_complete_analyze){
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
+        }
+    }
+    afile.close();
 }
 
 void Random_flow_Window::get_wave_info(double cycle, double amplitue) // 主窗口获得波动信息的槽函数
@@ -217,6 +268,97 @@ void Random_flow_Window::get_wave_info(double cycle, double amplitue) // 主窗�
     };
     ui->textBrowser_rain_function->clear();
     ui->textBrowser_rain_function->append(str);
+}
+
+void Random_flow_Window::get_MC_times(int time) // 主窗口获得蒙特卡洛模拟进行次数的槽函数
+{
+    mutex.lock();
+    MC_act_time = time ;
+    int t = floor((MC_act_time + MC_act_time_1) * 100 / MC_times) ;
+    ui->progressBar_MC_uwt->setValue(t);
+    mutex.unlock();
+}
+
+void Random_flow_Window::get_MC_amplitude_complete_fdm(Eigen::VectorXd vector1) // 主窗口获得蒙特卡洛模拟结果的槽函数
+{
+    mutex.lock();
+    if(MC_act_time == 1) MC_amplitude_complete_fdm_1 = vector1;
+    else
+    {
+        for(int i = 0; i < (flow.show_n() / 2);i++)
+        {
+            MC_amplitude_complete_fdm_1[i] = (MC_amplitude_complete_fdm_1[i] * (MC_act_time - 1) + vector1[i]) / MC_act_time; // 取加权平均数，即为所以结果总共的平均数
+
+        }
+    }
+    mutex.unlock();
+}
+
+void Random_flow_Window::get_MC_finished() //获得进程结束的槽函数
+{
+    mutex.lock();
+    MCThread_uniform_wt_amp1_work = false;
+    ui->textBrowser->append("线程1已结束");
+    if(MCThread_uniform_wt_amp2_work == false)
+    {
+        ui->progressBar_MC_uwt->setValue(100);
+        ui->MC_un_wt_amp_start->setEnabled(true);
+        ui->textBrowser->append("所有线程均已结束");
+        for(int i = 0; i < (flow.show_n() / 2);i++)
+        {
+            MC_amplitude_complete_fdm[i] = (MC_amplitude_complete_fdm_1[i] + MC_amplitude_complete_fdm_2[i]) / 2; // 两个线程的结果取平均数以得到最后的结果
+        }
+    }
+    else
+    {
+        MC_amplitude_complete_fdm = MC_amplitude_complete_fdm_1;
+    }
+    mutex.unlock();
+}
+
+void Random_flow_Window::get_MC_times_1(int time) // 主窗口获得蒙特卡洛模拟进行次数的槽函数
+{
+    mutex.lock();
+    MC_act_time_1 = time ;
+    int t = floor((MC_act_time + MC_act_time_1) * 100 / MC_times) ;
+    ui->progressBar_MC_uwt->setValue(t);
+    mutex.unlock();
+}
+
+void Random_flow_Window::get_MC_amplitude_complete_fdm_1(Eigen::VectorXd vector1) // 主窗口获得蒙特卡洛模拟结果的槽函数
+{
+    mutex.lock();
+    if(MC_act_time_1 == 1) MC_amplitude_complete_fdm_2 = vector1;
+    else
+    {
+        for(int i = 0; i < (flow.show_n() / 2);i++)
+        {
+            MC_amplitude_complete_fdm_2[i] = (MC_amplitude_complete_fdm_2[i] * (MC_act_time_1 - 1) + vector1[i]) / MC_act_time_1; // 取加权平均数，即为所以结果总共的平均数
+        }
+    }
+    mutex.unlock();
+}
+
+void Random_flow_Window::get_MC_finished_1() //获得进程结束的槽函数
+{
+    mutex.lock();
+    MCThread_uniform_wt_amp2_work = false;
+    ui->textBrowser->append("线程2已结束");
+    if(MCThread_uniform_wt_amp1_work == false)
+    {
+        ui->progressBar_MC_uwt->setValue(100);
+        ui->MC_un_wt_amp_start->setEnabled(true);
+        ui->textBrowser->append("所有线程均已结束");
+        for(int i = 0; i < (flow.show_n() / 2);i++)
+        {
+            MC_amplitude_complete_fdm[i] = (MC_amplitude_complete_fdm_1[i] + MC_amplitude_complete_fdm_2[i]) / 2; // 两个线程的结果取平均数以得到最后的结果
+        }
+    }
+    else
+    {
+        MC_amplitude_complete_fdm = MC_amplitude_complete_fdm_2;
+    }
+    mutex.unlock();
 }
 
 void Random_flow_Window::do_mouseMovePoint(QPoint point)
@@ -406,7 +548,7 @@ void Random_flow_Window::on_draw_solve_line_location_clicked()
     series_head->setName("水头曲线: 数值解");
     int a = ui->spinBox_X->value();
     double x = 0.0;
-    double min_h = 100.0;
+    double min_h = 800.0;
     double max_h = 0.0;
     for (double h : solve_fdm.col(a)) {
         series_head->append(x, h);
@@ -841,13 +983,13 @@ void Random_flow_Window::on_use_white_noise_checkBox_time_clicked()
     }
 }
 
-
 void Random_flow_Window::on_actual_expectations_clicked()
 {
     QString str = QString::number(flow.actual_expectations_white_noise_time());
     ui->textBrowser->append("在本次随机数生成中，源汇项实际期望值为：" + str);
+    QString str1 = QString::number(flow.fangcha_white_noise_time());
+    ui->textBrowser->append("在本次随机数生成中，源汇项实际方差为：" + str1);
 }
-
 
 void Random_flow_Window::on_power_spectral_density_figure_clicked()
 {
@@ -904,7 +1046,6 @@ void Random_flow_Window::on_power_spectral_density_figure_clicked()
     series_W->attachAxis(axis_W);
 }
 
-
 void Random_flow_Window::on_amplitude_complete_figure_clicked()
 {
     clear_chart_head();
@@ -923,9 +1064,19 @@ void Random_flow_Window::on_amplitude_complete_figure_clicked()
     // 找到最大振幅值，以便设置绘图坐标轴
     //double max_A = amplitude_complete_fdm.maxCoeff();
     double max_B = amplitude_complete_analyze.maxCoeff();
-    for (double A_fdm : amplitude_complete_fdm) {
-        series_head->append(x,A_fdm);
-        x += (1/ flow.show_tl());
+
+    // 使用蒙特卡洛绘图
+    if (use_MC_to_draw){
+        for (double A_fdm : MC_amplitude_complete_fdm) {
+            series_head->append(x,A_fdm);
+            x += (1/ flow.show_tl());
+        }
+    }
+    else{
+        for (double A_fdm : amplitude_complete_fdm) {
+            series_head->append(x,A_fdm);
+            x += (1/ flow.show_tl());
+        }
     }
     for (double A_analyze : amplitude_complete_analyze) {
         series_analyze->append(w, A_analyze);
@@ -952,5 +1103,135 @@ void Random_flow_Window::on_amplitude_complete_figure_clicked()
     chart_head->addAxis(axis_head, Qt::AlignLeft);
     series_head->attachAxis(axis_x);
     series_head->attachAxis(axis_head);
+
+}
+
+void Random_flow_Window::on_MC_un_wt_amp_start_clicked() // 关于源汇项随时间成均匀分布的蒙特卡洛线程启动函数
+{
+    //MC_amplitude_complete_fdm.setZero();
+    MCThread_uniform_wt_amp1->set_flow(flow);
+    MCThread_uniform_wt_amp1->set_times(floor(MC_times/2));
+    MCThread_uniform_wt_amp1->start();
+    MCThread_uniform_wt_amp1_work = true;
+
+    MCThread_uniform_wt_amp2->set_flow(flow);
+    MCThread_uniform_wt_amp2->set_times(floor(MC_times/2));
+    MCThread_uniform_wt_amp2->start();
+    MCThread_uniform_wt_amp2_work = true;
+
+    ui->MC_un_wt_amp_start->setEnabled(false);
+    ui->progressBar_MC_uwt->setValue(0); // 进度条设置为0
+
+    MC_act_time = 0;
+    MC_act_time_1 = 0;
+}
+
+void Random_flow_Window::on_spinBox_MC_un_wt_amp_valueChanged(int arg1)
+{
+    MC_times = arg1;
+}
+
+void Random_flow_Window::on_checkBox_use_MC_clicked()
+{
+    if(ui->checkBox_use_MC->isChecked() == true) use_MC_to_draw = true;
+    else use_MC_to_draw = false;
+}
+
+
+void Random_flow_Window::on_draw_solve_line_as_clicked()
+{
+    clear_chart_head();
+
+    QString title = "解析解与数值解对比图，绘图位置为右边界位置。";
+    ui->graphicsView->setChart(chart_head);
+    chart_head->setTitle(title);
+    //series_head->setName("水头曲线: 数值解");
+    series_analyze->setName("水头曲线: 解析解");
+    //series_head->setColor(QColorConstants::Red);
+    //std::vector<double>solve_fdm_l(flow.show_n());
+//    int a = ui->spinBox_X->value();
+//    int x_fdm = 0;
+//    for (double h : solve_fdm.col(a)) {
+//        solve_fdm_l[x_fdm] = h;
+//        x_fdm += 1;
+//    }
+//    for (int n = 0; n < flow.show_n(); n++) {
+//        series_head->append(n, solve_fdm_l[n]);
+//    }
+
+    double x = 0.0;
+    double min_h = 800.0;
+    double max_h = 0.0;
+    Eigen::MatrixXd solve_an = flow.solve_an_wt();
+    for (double h : solve_an.col((flow.show_m()-1))) {
+        series_analyze->append(x, h);
+        x += flow.show_st();
+        if(h < min_h) min_h = h;
+        if(h > max_h) max_h = h;
+    }
+
+    axis_x->setRange(0, flow.show_tl());
+    axis_x->setLabelFormat("%.2f"); // 标签格式
+    axis_x->setTickCount(11);
+    axis_x->setMinorTickCount(1);
+    axis_x->setTitleText("时间轴(d)");
+
+    chart_head->addAxis(axis_x, Qt::AlignBottom);
+    series_analyze->attachAxis(axis_x);
+
+    axis_head->setRange(min_h, max_h);
+    axis_head->setLabelFormat("%.4f"); // 标签格式
+    axis_head->setTickCount(11);
+    axis_head->setMinorTickCount(1);
+    axis_head->setTitleText("水头(m)");
+
+    chart_head->addAxis(axis_head, Qt::AlignLeft);
+    series_analyze->attachAxis(axis_head);
+
+    // 更新图表
+    chart_head->addSeries(series_analyze);
+//    series_head->attachAxis(axis_x);
+//    series_head->attachAxis(axis_head);
+//    chart_head->addSeries(series_head);
+}
+
+void Random_flow_Window::on_actionsave_fdm_triggered() // 存储当前数值解数据
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前数值解数据";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 0);
+}
+
+void Random_flow_Window::on_actionsave_MC_triggered()
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前蒙特卡洛数据";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 1);
+}
+
+void Random_flow_Window::on_actionsave_as_triggered()
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前解析解数据";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 2);
+}
+
+void Random_flow_Window::on_actionsave_as_complete_triggered()
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前解析解数据(振幅比)";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 3);
 }
 

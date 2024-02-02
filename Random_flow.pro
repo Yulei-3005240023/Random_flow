@@ -14,6 +14,7 @@ LIBS += -L"F:\Qt_project\fftw-3.3.5-dll64" -lfftw3-3
 
 SOURCES += \
     main.cpp \
+    mcthread.cpp \
     random_flow.cpp \
     random_flow_window.cpp \
     set_fdm.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
 
 HEADERS += \
     Random_flow.h \
+    mcthread.h \
     random_flow_window.h \
     set_fdm.h \
     set_hydrogeological_parameter.h \

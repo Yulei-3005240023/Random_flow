@@ -61,11 +61,13 @@ private:
     std::vector<double> plate; // 底板高程数组
     std::vector<double> numberical_value_w; // 源汇项数值组
 
+    //QMutex mutex; // 互斥量，用于确保线程之间不会冲突
+
 protected:
     bool use_white_noise_time;
     bool use_white_noise_length;
-    qint64 seed; // 随机数种子
-    QRandomGenerator *rand;
+    //qint64 seed; // 随机数种子
+    //QRandomGenerator *rand;
 
 
 public:
@@ -98,22 +100,24 @@ public:
 
     std::vector<std::vector<double>> share_list_source_sink_term();
     std::vector<std::vector<double>> share_list_source_sink_term_x();
-    Eigen::MatrixXd solve(int how_to_solve);
+    Eigen::MatrixXd solve(int how_to_solve); // 数值解求解计算
+    std::complex<double> M(double a, double x, double w, double l); // 解析解中的函数M
+    Eigen::MatrixXd solve_an_wt(); // 解析解求解计算
     Eigen::VectorXd fast_fourier_transfrom(Eigen::MatrixXd solution, int n); // 快速傅里叶变换代码
     Eigen::VectorXd power_spectral_density(Eigen::MatrixXd solution, int n); // 功率谱密度变换代码
     Eigen::VectorXd amplitude_complete_fdm(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解
     Eigen::VectorXd amplitude_complete_analyze(); // 功率谱振幅比-解析解
 
     Eigen::MatrixXd solve_zhuiganfa(Eigen::MatrixXd a,Eigen::MatrixXd b); // 追赶法算法
-    std::complex<double> M(double x, double w, double l); // 解析解中的M
     double A(double w); // 解析解，返回给定频率的功率谱振幅比值
 
     void set_angle(double a); // 设置底板倾斜角度
     void create_plate(); // 创建底板高程数组
     double plate_elevation(double i); // 底板高程数据输出
 
-    void set_white_noise_time(int s);
+    void set_white_noise_time(int s); // 生成均匀分布的白噪声
     double actual_expectations_white_noise_time(); // 白噪声实际期望值计算
+    double fangcha_white_noise_time(); // 白噪声实际方差计算
 
 
 

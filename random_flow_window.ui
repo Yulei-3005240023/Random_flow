@@ -251,7 +251,7 @@
        <item>
         <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>当前降雨量函数(m):</string>
+          <string>当前降雨量函数(m/d):</string>
          </property>
         </widget>
        </item>
@@ -325,16 +325,42 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="layoutWidget">
+     <widget class="QCheckBox" name="use_white_noise_checkBox_time">
       <property name="geometry">
        <rect>
         <x>820</x>
-        <y>70</y>
-        <width>377</width>
-        <height>41</height>
+        <y>10</y>
+        <width>191</width>
+        <height>23</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_8">
+      <property name="text">
+       <string>使用均匀分布的关系填充</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="actual_expectations">
+      <property name="geometry">
+       <rect>
+        <x>1030</x>
+        <y>10</y>
+        <width>201</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>查看当前分布的实际期望</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_11">
+      <property name="geometry">
+       <rect>
+        <x>820</x>
+        <y>40</y>
+        <width>160</width>
+        <height>103</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_11">
        <item>
         <widget class="QPushButton" name="time_field_figure">
          <property name="text">
@@ -358,32 +384,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QCheckBox" name="use_white_noise_checkBox_time">
-      <property name="geometry">
-       <rect>
-        <x>820</x>
-        <y>10</y>
-        <width>131</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>使用白噪声填充</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="actual_expectations">
-      <property name="geometry">
-       <rect>
-        <x>970</x>
-        <y>10</y>
-        <width>151</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>查看白噪声实际期望</string>
-      </property>
-     </widget>
     </widget>
     <widget class="QWidget" name="tab_5">
      <attribute name="title">
@@ -402,7 +402,7 @@
        <item>
         <widget class="QLabel" name="label_11">
          <property name="text">
-          <string>当前降雨量函数(m):</string>
+          <string>当前降雨量函数(m/d):</string>
          </property>
         </widget>
        </item>
@@ -635,7 +635,7 @@
         <x>480</x>
         <y>10</y>
         <width>206</width>
-        <height>121</height>
+        <height>139</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -647,26 +647,95 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="draw_solve_line_as">
+         <property name="text">
+          <string>绘制右边界的解析解线型图</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="draw_solve_line_location_fft">
          <property name="text">
           <string>绘制频域图像</string>
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="amplitude_complete_figure">
+         <property name="text">
+          <string>功率谱振幅对比图</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="amplitude_complete_figure">
+     <widget class="QPushButton" name="MC_un_wt_amp_start">
       <property name="geometry">
        <rect>
-        <x>710</x>
-        <y>40</y>
-        <width>171</width>
+        <x>930</x>
+        <y>0</y>
+        <width>251</width>
         <height>41</height>
        </rect>
       </property>
       <property name="text">
-       <string>功率谱振幅对比图</string>
+       <string>边界位置功率谱蒙特卡洛数值模拟</string>
       </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QProgressBar" name="progressBar_MC_uwt">
+      <property name="geometry">
+       <rect>
+        <x>930</x>
+        <y>80</y>
+        <width>251</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="value">
+       <number>99</number>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="checkBox_use_MC">
+      <property name="geometry">
+       <rect>
+        <x>710</x>
+        <y>80</y>
+        <width>181</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>使用蒙特卡洛数据绘图</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_7">
+      <property name="geometry">
+       <rect>
+        <x>930</x>
+        <y>40</y>
+        <width>251</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_8">
+       <item>
+        <widget class="QLabel" name="label_13">
+         <property name="text">
+          <string>模拟次数：</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinBox_MC_un_wt_amp">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_6">
@@ -852,6 +921,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <property name="title">
      <string>开始</string>
     </property>
+    <addaction name="actionsave_fdm"/>
+    <addaction name="actionsave_MC"/>
+    <addaction name="actionsave_as"/>
+    <addaction name="actionsave_as_complete"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -874,6 +947,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>水文地质参数设置</string>
    </property>
   </action>
+  <action name="actionsave_fdm">
+   <property name="text">
+    <string>保存当前数值解数据</string>
+   </property>
+  </action>
+  <action name="actionsave_MC">
+   <property name="text">
+    <string>保存当前蒙特卡洛数据(振幅比)</string>
+   </property>
+  </action>
+  <action name="actionsave_as">
+   <property name="text">
+    <string>保存当前解析解数据</string>
+   </property>
+  </action>
+  <action name="actionsave_as_complete">
+   <property name="text">
+    <string>保存当前解析解数据(振幅比)</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -892,8 +985,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <tabstop>spinBox_t_length</tabstop>
   <tabstop>doubleSpinBox_ic</tabstop>
   <tabstop>textBrowser_rain_function</tabstop>
-  <tabstop>time_field_figure</tabstop>
-  <tabstop>frequency_field_figure</tabstop>
   <tabstop>doubleSpinBox_rain</tabstop>
   <tabstop>random_new_wave</tabstop>
   <tabstop>new_wave</tabstop>

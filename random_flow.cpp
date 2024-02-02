@@ -113,13 +113,13 @@ Random_one_dimension_boussinesq::Random_one_dimension_boussinesq() : Random_flow
 
     use_white_noise_time = false;
     use_white_noise_length = false;
-    seed = 0;
-    rand = new QRandomGenerator(seed);
+    //seed = 0;
+    //rand = new QRandomGenerator(seed);
 }
 
 Random_one_dimension_boussinesq::~Random_one_dimension_boussinesq()
 {
-    delete rand;
+    //delete rand;
 }
 
 void Random_one_dimension_boussinesq::a_()
@@ -295,7 +295,7 @@ double Random_one_dimension_boussinesq:: source_sink_term(double t)
     }
     else
     {
-        double w_ = we;
+        double w_ = 0; //  w_ = we
         for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
             if(list_source_sink_term[i][0] == 0){
                 w_ += list_source_sink_term[i][1] * std::sin(2 * 3.1514926 * (1 / list_source_sink_term[i][2]) * t);
@@ -429,35 +429,157 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
             }
             // 判断是否满足精度需求
             int precision = 0;
-            for(int u = 0; u < show_m(); u++){
-                if (abs(H_previous_iteration_1(0, u) - H(u, 0)) > 0.001){
-                    precision = 1;
-                }
-            }
-            if (precision != 1){
-                break;
-            }
-            else{
+            if(iteration_times == 0){  //第0次计算不参与比较精度，继续计算
                 iteration_times += 1;
                 H_previous_iteration_1.row(0) = H.col(0);
                 for(int o = 0;o < show_m(); o++){
                     H_previous_iteration.row(0)(o) = H.col(0)(o) - plate_elevation(o);
                 }
+            }
+            else{
+                for(int u = 0; u < show_m(); u++){
+                    if (abs(H_previous_iteration_1(0, u) - H(u, 0)) > 0.000001){
+                        precision = 1;
+                    }
                 }
-
-            if(iteration_times > 100)
-            break;
+                if (precision != 1){
+                    break;
+                }
+                else{
+                    iteration_times += 1;
+                    H_previous_iteration_1.row(0) = H.col(0);
+                    for(int o = 0;o < show_m(); o++){
+                        H_previous_iteration.row(0)(o) = H.col(0)(o) - plate_elevation(o);
+                    }
+                }
+            }
+            if(iteration_times > 10000){
+                //std::cout<<iteration_times<<std::endl;
+                break;
+            }
         }
-        //std::cout<<iteration_times<<std::endl;
+
         for(int o = 0; o < show_m(); o++)  // 对空间进行扫描，整合成所有适合的计算水头
             H_ALL(k, o) = H(o, 0);
 
     }
     return H_ALL;
 }
+std::complex<double> Random_one_dimension_boussinesq::M(double a, double x, double w, double l){
+    double imag_r = /*2 * 3.1415926 */ w / a;
+    std::complex<double>r(0,  imag_r);
+    std::complex<double>r1 = sqrt(r) ;
+    std::complex<double>r2(-r1.real(), -r1.imag());
+    std::complex<double> m;
+    m = (r1 *exp(r1 * l)* exp(r2 * x) - r2 *exp(r2 * l)* exp(r1 * x)) / (r1 *exp(r1 * l) -  r2 *exp(r2 * l));
+    std::complex<double> m_(m.real()-1, m.imag());
+    return m_;
+}
+
+Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求解计算  只算右边界得了
+{
+    a_(); // 重新计算压力扩散系数a
+    Eigen::MatrixXd H_ALL(show_n(), show_m());//创建一个矩阵，用于存放各个离散位置的水头值
+    H_ALL.setZero();
+    std::vector<double> wt(show_n()); // 离散化源汇项储存数组
+    double t = 0.0;
+    // 离散化源汇项赋值
+    for(int i = 0; i < show_n(); i++){
+        wt[i] = source_sink_term(t);
+        t += show_st();
+    }
+    // 把源汇项做离散傅里叶变换
+    std::vector<std::complex<double>> dft_wt(show_n());
+
+/*    // 创建输出数组，用于存储FFT结果
+    fftw_complex *out_w = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
+    // 创建FFT计划
+    fftw_plan plan_w = fftw_plan_dft_r2c_1d(show_n(), wt.data(), out_w, FFTW_ESTIMATE);
+    // 执行FFT计算
+    fftw_execute(plan_w);
+    for(int k = 0; k < show_n(); k++){
+        dft_wt[k] = std::complex<double>(out_w[k][0], out_w[k][1]);
+    }
+    // 释放资源
+    fftw_destroy_plan(plan_w);
+    fftw_free(out_w)*/;
+
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        std::complex<double>Fw(0, 0);
+        for (int n = 0; n < show_n(); n++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (-1 /* 2 * 3.1415926*/ * k * n )/ n_;
+            std::complex<double>eF(0, imag);
+            std::complex<double>F_ = wt[n] * exp(eF);
+            Fw = Fw + F_;
+        }
+        Fw = Fw * show_st();
+        dft_wt[k] = Fw;
+    }
+
+    std::complex<double>j(0, 1); // 此式子代表虚数j
+    ///std::complex<double>one(1,0); // 代表实数1
+    // 求水头变化量离散傅里叶变换, 就右边界一条线
+    std::vector<std::complex<double>> dft_h(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        if(k == 0){ // 初始条件为0
+            std::complex<double>Fh0(0, 0);
+            dft_h[k] = Fh0;
+        }
+        else{
+            std::complex<double>Fh(0, 0);
+            double wSy_real = k * (1 /(show_st() *show_n()))* Sy /* * 2 * 3.1415926*/;
+            std::complex<double>wSy(wSy_real , 0);
+            double kw = k * (1 /(show_st() *show_n()));
+            std::complex<double>m = M(a, show_xl(), kw, show_xl());
+            Fh = ((j * dft_wt[k]) / wSy) * m;
+            dft_h[k] = Fh;
+        }
+    }
+    // 水头变化的傅里叶逆变换
+    std::vector<double>h(show_n());
+//    std::vector<double>h_(show_n());
+//    // 输入和输出数组
+//    fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
+//    for(int k=0;k<show_n();k++){
+//        in[k][0] = dft_h[k].real();
+//        in[k][1] = dft_h[k].imag();
+//    }
+//    double* out = (double*) fftw_malloc(sizeof(double) * show_n());
+//    // 创建逆变换计划
+//    fftw_plan plan = fftw_plan_dft_c2r_1d(show_n(), in, out, FFTW_ESTIMATE);
+//    // 执行逆变换
+//    fftw_execute(plan);
+//    for(int n = 0; n < show_n(); n++){
+//        h_[n] = out[n] / show_n();
+//    }
+//    // 释放资源
+//    fftw_destroy_plan(plan);
+//    fftw_free(in);
+//    fftw_free(out);
+
+    for(int n = 0; n < show_n(); n++){
+        std::complex<double> h_(0,0);
+        for (int k = 0; k < show_n(); k++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (k * n)/ n_;
+            std::complex<double>eh(0, imag);
+            h_ = h_ + dft_h[k] * exp(eh);
+        }
+        h[n] = h_.real()* (1/(show_st() *show_n())) / 3.1415926;
+    }
+    for(int n = 0; n < show_n(); n++){
+        H_ALL(n, (show_m() - 1)) = h[n] + show_ic();
+    }
+    return H_ALL;
+}
 
 Eigen::VectorXd Random_one_dimension_boussinesq::fast_fourier_transfrom(Eigen::MatrixXd solution, int n)
 {
+    //mutex.lock(); // 互斥量保护一下线程，以便于后续多线程计算
+    fftw_plan_with_nthreads(1);
     set_n_m();
     // 创建输出数组，用于存储FFT结果
     fftw_complex *out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * n);
@@ -481,6 +603,7 @@ Eigen::VectorXd Random_one_dimension_boussinesq::fast_fourier_transfrom(Eigen::M
     // 销毁计划
     fftw_destroy_plan(plan);
     fftw_free(out);
+    //mutex.unlock();
     return Amplitude;
 }
 
@@ -571,31 +694,17 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_zhuiganfa(Eigen::MatrixXd
     return x;
 }
 
-std::complex<double> Random_one_dimension_boussinesq::M(double x, double w, double l)
-{
-    std::complex<double>r1(0, w/a);
-    std::complex<double>r2(0, w/a);
-    r1 = sqrt(r1);
-    r2 = conj(r1); // 共轭复数
-    std::complex<double> m;
-    m = (r1 *exp(r1 * l)* exp(r2 * x) - r2 *exp(r2 * l)* exp(r1 * x)) / (r1 *exp(r1 * l) -  r2 *exp(r2 * l));
-    return m;
-}
-
 double Random_one_dimension_boussinesq::A(double w){
-    std::complex<double> z(0.0, w * show_xl() * show_xl() / a);
+    w = w;
+    double z_imag = w * show_xl() * show_xl() / a;
+    std::complex<double> z(0, z_imag);
     std::complex<double> sqrt_z = std::sqrt(z);
     // 计算双曲余弦的反函数
     std::complex<double> acosh_z = std::acosh(sqrt_z);
-    double result = (show_xl() * show_xl() / (a * Sy)) * abs((a / (w * show_xl() * show_xl())) *acosh_z);
-    //std::complex<double>a_com(0, 1/(w * Sy));
-    //std::complex<double>m = M(x, w, l);
-    //std::complex<double>m_(m.real() - 1, m.imag());
-    //cout<<m_<<endl;
-    //double Amp = fabs(a_com * (m_));
-    //return Amp;
+    double awl_real = a / (w * show_xl() * show_xl());
+    std::complex<double> awl(awl_real, 0);
+    double result = (show_xl() * show_xl() / (a * Sy)) * abs(awl * acosh_z);
     return result;
-
 }
 
 void Random_one_dimension_boussinesq::set_angle(double a)
@@ -647,4 +756,21 @@ double Random_one_dimension_boussinesq::actual_expectations_white_noise_time()
         expectations += e;
     }
     return expectations / show_n();
+}
+
+double Random_one_dimension_boussinesq::fangcha_white_noise_time()
+{
+    double expectation =0;
+    double expectations = 0;
+    double d = 0;
+    for(double e : numberical_value_w)
+    {
+        expectation += e;
+    }
+    expectations = expectation / show_n();
+    for(double i : numberical_value_w)
+    {
+        d += (i - expectations) * (i - expectations);
+    }
+    return d / show_n();
 }
