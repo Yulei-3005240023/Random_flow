@@ -32,7 +32,7 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>0</y>
       <width>1401</width>
       <height>191</height>
@@ -42,7 +42,7 @@
      <bool>false</bool>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -214,10 +214,10 @@
      <widget class="QWidget" name="horizontalLayoutWidget_5">
       <property name="geometry">
        <rect>
-        <x>570</x>
-        <y>0</y>
+        <x>0</x>
+        <y>90</y>
         <width>221</width>
-        <height>80</height>
+        <height>51</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -230,6 +230,187 @@
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="doubleSpinBox_angle"/>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_7">
+     <attribute name="title">
+      <string>随机边界设置</string>
+     </attribute>
+     <widget class="QWidget" name="verticalLayoutWidget_12">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>241</width>
+        <height>130</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_12">
+       <item>
+        <widget class="QLabel" name="label_15">
+         <property name="text">
+          <string>左边界</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="random_new_wave_h_l">
+         <property name="text">
+          <string>随机新建一个水头/通量波动</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="new_wave_h_l">
+         <property name="text">
+          <string>手动新建一个降雨量波动</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="delete_wave_h_l">
+         <property name="text">
+          <string>删除上一个水头/通量波动</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_13">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>0</y>
+        <width>231</width>
+        <height>131</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_13">
+       <item>
+        <widget class="QLabel" name="label_14">
+         <property name="text">
+          <string>当前边界函数(m/d):</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextBrowser" name="textBrowser_function_h_l"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_14">
+      <property name="geometry">
+       <rect>
+        <x>630</x>
+        <y>0</y>
+        <width>241</width>
+        <height>130</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_14">
+       <item>
+        <widget class="QLabel" name="label_17">
+         <property name="text">
+          <string>右边界</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="random_new_wave_h_r">
+         <property name="text">
+          <string>随机新建一个水头/通量波动</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="new_wave_h_r">
+         <property name="text">
+          <string>手动新建一个降雨量波动</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="delete_wave_h_r">
+         <property name="text">
+          <string>删除上一个水头/通量波动</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_15">
+      <property name="geometry">
+       <rect>
+        <x>870</x>
+        <y>0</y>
+        <width>231</width>
+        <height>131</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_15">
+       <item>
+        <widget class="QLabel" name="label_19">
+         <property name="text">
+          <string>当前边界函数(m/d):</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextBrowser" name="textBrowser_function_h_r"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_16">
+      <property name="geometry">
+       <rect>
+        <x>470</x>
+        <y>0</y>
+        <width>160</width>
+        <height>103</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_16">
+       <item>
+        <widget class="QPushButton" name="time_field_figure_h_l">
+         <property name="text">
+          <string>查看时域图像</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="frequency_field_figure_h_l">
+         <property name="text">
+          <string>查看频域图像</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_17">
+      <property name="geometry">
+       <rect>
+        <x>1100</x>
+        <y>0</y>
+        <width>160</width>
+        <height>103</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_17">
+       <item>
+        <widget class="QPushButton" name="time_field_figure_h_r">
+         <property name="text">
+          <string>查看时域图像</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="frequency_field_figure_h_r">
+         <property name="text">
+          <string>查看频域图像</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -507,38 +688,12 @@
      <attribute name="title">
       <string>同一时刻的水头绘图</string>
      </attribute>
-     <widget class="QWidget" name="horizontalLayoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>730</x>
-        <y>10</y>
-        <width>195</width>
-        <height>80</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="text">
-          <string>上一时刻</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_3">
-         <property name="text">
-          <string>下一时刻</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="gridLayoutWidget_2">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>461</width>
+        <width>251</width>
         <height>151</height>
        </rect>
       </property>
@@ -565,7 +720,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_7">
       <property name="geometry">
        <rect>
-        <x>470</x>
+        <x>250</x>
         <y>0</y>
         <width>251</width>
         <height>151</height>
@@ -586,13 +741,6 @@
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QPushButton" name="draw_surface">
-         <property name="text">
-          <string>绘制《位置-水头-时间》三维图</string>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
     </widget>
@@ -605,7 +753,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>461</width>
+        <width>291</width>
         <height>151</height>
        </rect>
       </property>
@@ -632,9 +780,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_8">
       <property name="geometry">
        <rect>
-        <x>480</x>
-        <y>10</y>
-        <width>206</width>
+        <x>290</x>
+        <y>0</y>
+        <width>276</width>
         <height>139</height>
        </rect>
       </property>
@@ -649,7 +797,7 @@
        <item>
         <widget class="QPushButton" name="draw_solve_line_as">
          <property name="text">
-          <string>绘制右边界的解析解线型图</string>
+          <string>绘制右边界的解析解线型图(源汇项波动)</string>
          </property>
         </widget>
        </item>
@@ -701,8 +849,8 @@
      <widget class="QCheckBox" name="checkBox_use_MC">
       <property name="geometry">
        <rect>
-        <x>710</x>
-        <y>80</y>
+        <x>770</x>
+        <y>120</y>
         <width>181</width>
         <height>23</height>
        </rect>
@@ -994,13 +1142,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <tabstop>new_wave_x</tabstop>
   <tabstop>delete_wave_x</tabstop>
   <tabstop>textBrowser_rain_function_x</tabstop>
-  <tabstop>pushButton_2</tabstop>
-  <tabstop>pushButton_3</tabstop>
   <tabstop>textBrowser_time</tabstop>
   <tabstop>spinBox_time</tabstop>
   <tabstop>draw_solve_line</tabstop>
   <tabstop>draw_solve_line_fft</tabstop>
-  <tabstop>draw_surface</tabstop>
   <tabstop>textBrowser_X</tabstop>
   <tabstop>spinBox_X</tabstop>
   <tabstop>draw_solve_line_location</tabstop>

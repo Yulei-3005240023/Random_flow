@@ -56,6 +56,8 @@ private slots:
 
     void on_time_field_figure_clicked();
 
+    void on_spinBox_x_length_valueChanged(int arg1);
+
     void on_spinBox_t_length_valueChanged(int arg1);
 
     void on_frequency_field_figure_clicked();
@@ -110,11 +112,24 @@ private slots:
 
     void on_checkBox_use_MC_clicked();
 
+    void on_doubleSpinBox_left_boundary_valueChanged(double arg1);
+
     void on_actionsave_MC_triggered();
 
     void on_actionsave_as_triggered();
 
     void on_actionsave_as_complete_triggered();
+
+    void on_doubleSpinBox_right_boundary_valueChanged(double arg1);
+
+    void on_random_new_wave_h_l_clicked();
+
+    void on_delete_wave_h_l_clicked();
+
+    void on_random_new_wave_h_r_clicked();
+
+
+    void on_delete_wave_h_r_clicked();
 
 private:
     Ui::Random_flow_Window *ui;

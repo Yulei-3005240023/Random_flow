@@ -189,6 +189,94 @@ void Random_one_dimension_boussinesq::l_boundary(double h, bool Dirichlet, bool 
     }
 }
 
+void Random_one_dimension_boussinesq::random_h_l()
+{
+    // 创建一个随机数引擎
+    std::random_device rd;
+    std::mt19937 gen(rd()); // 使用Mersenne Twister引擎
+    // 定义三个随机数分布器
+    std::uniform_int_distribution<> dis(1, 51); // 生成1到50之间的随机整数
+    std::uniform_real_distribution<> dis_1(0, h_l[1]); // 生成0~h_l[1]的随机小数
+    std::uniform_int_distribution<> dis_(0, 1); // 生成0或1的随机整数
+    // 随机振幅
+    double amplitude = dis_1(gen);
+    // 随机周期
+    double cycle = 0.0;
+    while(true){
+        cycle = show_tl() / dis(gen); // 依据香农采样定理采样频率必须大于信号频率的两倍
+        if (cycle >= 3 * show_st())  // 所以信号周期的随机生成必须大于采样周期的两倍，本程序取三倍
+            break;
+    }
+    set_list_h_l(dis_(gen), amplitude, cycle);
+}
+
+void Random_one_dimension_boussinesq::set_list_h_l(double type_function, double amplitude, double cycle)
+{
+    std::vector<double> Array1 = {type_function, amplitude, cycle};
+    list_h_l.push_back(Array1);
+}
+
+void Random_one_dimension_boussinesq::del_last_list_h_l() //  删除源汇项列表的最后一项
+{
+    std::vector<std::vector<double>> list_h_l_new(list_h_l.size() - 1, std::vector<double>(3));
+    for (unsigned long long i = 0; i < list_h_l.size() - 1; i++) {
+        for (unsigned long long j = 0; j < list_h_l[i].size(); j++) {
+            list_h_l_new[i][j] = list_h_l[i][j];
+        }
+    }
+    list_h_l = list_h_l_new;
+}
+
+void Random_one_dimension_boussinesq::clear_list_h_l()
+{
+    std::vector<std::vector<double>> list_h_l_clear;
+    list_h_l = list_h_l_clear;
+}
+
+void Random_one_dimension_boussinesq::random_h_r()
+{
+    // 创建一个随机数引擎
+    std::random_device rd;
+    std::mt19937 gen(rd()); // 使用Mersenne Twister引擎
+    // 定义三个随机数分布器
+    std::uniform_int_distribution<> dis(1, 51); // 生成1到50之间的随机整数
+    std::uniform_real_distribution<> dis_1(0, h_l[1]); // 生成0~h_l[1]的随机小数
+    std::uniform_int_distribution<> dis_(0, 1); // 生成0或1的随机整数
+    // 随机振幅
+    double amplitude = dis_1(gen);
+    // 随机周期
+    double cycle = 0.0;
+    while(true){
+        cycle = show_tl() / dis(gen); // 依据香农采样定理采样频率必须大于信号频率的两倍
+        if (cycle >= 3 * show_st())  // 所以信号周期的随机生成必须大于采样周期的两倍，本程序取三倍
+            break;
+    }
+    set_list_h_r(dis_(gen), amplitude, cycle);
+}
+
+void Random_one_dimension_boussinesq::set_list_h_r(double type_function, double amplitude, double cycle)
+{
+    std::vector<double> Array1 = {type_function, amplitude, cycle};
+    list_h_r.push_back(Array1);
+}
+
+void Random_one_dimension_boussinesq::del_last_list_h_r() //  删除源汇项列表的最后一项
+{
+    std::vector<std::vector<double>> list_h_r_new(list_h_r.size() - 1, std::vector<double>(3));
+    for (unsigned long long i = 0; i < list_h_r.size() - 1; i++) {
+        for (unsigned long long j = 0; j < list_h_r[i].size(); j++) {
+            list_h_r_new[i][j] = list_h_r[i][j];
+        }
+    }
+    list_h_r = list_h_r_new;
+}
+
+void Random_one_dimension_boussinesq::clear_list_h_r()
+{
+    std::vector<std::vector<double>> list_h_r_clear;
+    list_h_r = list_h_r_clear;
+}
+
 void Random_one_dimension_boussinesq::random_source_sink_term()
 {
     // 创建一个随机数引擎
@@ -331,6 +419,16 @@ std::vector<std::vector<double>> Random_one_dimension_boussinesq::share_list_sou
 std::vector<std::vector<double>> Random_one_dimension_boussinesq::share_list_source_sink_term_x()
 {
     return list_source_sink_term_x;
+}
+
+std::vector<std::vector<double>> Random_one_dimension_boussinesq::share_list_h_l()
+{
+    return list_h_l;
+}
+
+std::vector<std::vector<double>> Random_one_dimension_boussinesq::share_list_h_r()
+{
+    return list_h_r;
 }
 
 Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
@@ -695,7 +793,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_zhuiganfa(Eigen::MatrixXd
 }
 
 double Random_one_dimension_boussinesq::A(double w){
-    w = w;
+    //w = w;
     double z_imag = w * show_xl() * show_xl() / a;
     std::complex<double> z(0, z_imag);
     std::complex<double> sqrt_z = std::sqrt(z);

@@ -52,6 +52,12 @@ private:
     double ha; // 参考厚度
     double h_r[2]; // 左右边界
     double h_l[2];
+    std::vector<double> h_l_value; // 左边界数值组
+    std::vector<double> h_r_value; // 右边界数值组
+    int series_number_h_l; // 表示随机左边界的傅里叶级数的项数
+    std::vector<std::vector<double>> list_h_l; // 制定一个不定长二维数组来实现对左边界傅里叶级数的储存
+    int series_number_h_r; // 表示随机右边界的傅里叶级数的项数
+    std::vector<std::vector<double>> list_h_r; // 制定一个不定长二维数组来实现对右边界傅里叶级数的储存
     int series_number; // 表示随机源汇项的傅里叶级数的项数
     std::vector<std::vector<double>> list_source_sink_term; // 制定一个不定长二维数组来实现对源汇项傅里叶级数的储存
     int series_number_x; // 表示随机源汇项(x轴)的傅里叶级数的项数
@@ -84,6 +90,16 @@ public:
     void r_boundary(double h, bool Dirichlet=false, bool Neumann=false, bool Robin=false);
     void l_boundary(double h, bool Dirichlet=false, bool Neumann=false, bool Robin=false);
 
+    void random_h_l();
+    void set_list_h_l(double type_function, double amplitude, double cycle);
+    void del_last_list_h_l();
+    void clear_list_h_l();
+
+    void random_h_r();
+    void set_list_h_r(double type_function, double amplitude, double cycle);
+    void del_last_list_h_r();
+    void clear_list_h_r();
+
     void random_source_sink_term();
     void set_list_source_sink_term(double type_function, double amplitude, double cycle);
     void del_last_list_source_sink_term();
@@ -100,6 +116,9 @@ public:
 
     std::vector<std::vector<double>> share_list_source_sink_term();
     std::vector<std::vector<double>> share_list_source_sink_term_x();
+    std::vector<std::vector<double>> share_list_h_l();
+    std::vector<std::vector<double>> share_list_h_r();
+
     Eigen::MatrixXd solve(int how_to_solve); // 数值解求解计算
     std::complex<double> M(double a, double x, double w, double l); // 解析解中的函数M
     Eigen::MatrixXd solve_an_wt(); // 解析解求解计算

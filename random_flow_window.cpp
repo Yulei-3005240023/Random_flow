@@ -435,6 +435,11 @@ void Random_flow_Window::on_doubleSpinBox_rain_x_valueChanged(double arg1)
     ui->textBrowser_rain_function_x->append(str);
 }
 
+void Random_flow_Window::on_spinBox_x_length_valueChanged(int arg1)
+{
+    flow.x_length(arg1);
+}
+
 void Random_flow_Window::on_spinBox_t_length_valueChanged(int arg1)
 {
     flow.t_length(arg1);
@@ -1233,5 +1238,97 @@ void Random_flow_Window::on_actionsave_as_complete_triggered()
     QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
     ui->textBrowser->append(aFileName);
     save_the_data(aFileName, 3);
+}
+
+void Random_flow_Window::on_doubleSpinBox_left_boundary_valueChanged(double arg1)
+{
+    QString str = QString::number(arg1);
+    ui->textBrowser_function_h_l->clear();  // 重置展示边界条件函数的框
+    flow.clear_list_h_l();  // 重置左边界波动列表
+    ui->textBrowser_function_h_l->append(str);
+}
+
+void Random_flow_Window::on_doubleSpinBox_right_boundary_valueChanged(double arg1)
+{
+    QString str = QString::number(arg1);
+    ui->textBrowser_function_h_r->clear();  // 重置展示边界条件函数的框
+    flow.clear_list_h_r();  // 重置右边界波动列表
+    ui->textBrowser_function_h_r->append(str);
+}
+
+void Random_flow_Window::on_random_new_wave_h_l_clicked()
+{
+    if(ui->spinBox_t_length->value() != 0) flow.t_length(ui->spinBox_t_length->value());
+    flow.random_h_l();
+    std::vector<std::vector<double>> list_h_l = flow.share_list_h_l();
+    QString str = QString::number(ui->doubleSpinBox_left_boundary->value());
+    for (unsigned long long i = 0; i < list_h_l.size(); i++) {
+        if(list_h_l[i][0] == 0){
+            str += " + " + QString::number(list_h_l[i][1]) + "sin((2pi / " + QString::number(list_h_l[i][2]) + ") * t)";
+        }
+        else if(list_h_l[i][0] == 1){
+            str += " + " + QString::number(list_h_l[i][1]) + "cos((2pi / " + QString::number(list_h_l[i][2]) + ") * t)";
+        }
+    };
+    ui->textBrowser_function_h_l->clear();
+    ui->textBrowser_function_h_l->append(str);
+}
+
+void Random_flow_Window::on_delete_wave_h_l_clicked()
+{
+    if(flow.share_list_h_l().size() == 0) return;
+    else{
+        flow.del_last_list_h_l();
+        std::vector<std::vector<double>> list_h_l = flow.share_list_h_l();
+        QString str = QString::number(ui->doubleSpinBox_left_boundary->value());
+        for (unsigned long long i = 0; i < list_h_l.size(); i++) {
+            if(list_h_l[i][0] == 0){
+                str += " + " + QString::number(list_h_l[i][1]) + "sin((2pi / " + QString::number(list_h_l[i][2]) + ") * t)";
+            }
+            else if(list_h_l[i][0] == 1){
+                str += " + " + QString::number(list_h_l[i][1]) + "cos((2pi / " + QString::number(list_h_l[i][2]) + ") * t)";
+            }
+        };
+        ui->textBrowser_function_h_l->clear();
+        ui->textBrowser_function_h_l->append(str);
+    }
+}
+
+void Random_flow_Window::on_random_new_wave_h_r_clicked()
+{
+    if(ui->spinBox_t_length->value() != 0) flow.t_length(ui->spinBox_t_length->value());
+    flow.random_h_r();
+    std::vector<std::vector<double>> list_h_r = flow.share_list_h_r();
+    QString str = QString::number(ui->doubleSpinBox_right_boundary->value());
+    for (unsigned long long i = 0; i < list_h_r.size(); i++) {
+        if(list_h_r[i][0] == 0){
+            str += " + " + QString::number(list_h_r[i][1]) + "sin((2pi / " + QString::number(list_h_r[i][2]) + ") * t)";
+        }
+        else if(list_h_r[i][0] == 1){
+            str += " + " + QString::number(list_h_r[i][1]) + "cos((2pi / " + QString::number(list_h_r[i][2]) + ") * t)";
+        }
+    };
+    ui->textBrowser_function_h_r->clear();
+    ui->textBrowser_function_h_r->append(str);
+}
+
+void Random_flow_Window::on_delete_wave_h_r_clicked()
+{
+    if(flow.share_list_h_r().size() == 0) return;
+    else{
+        flow.del_last_list_h_r();
+        std::vector<std::vector<double>> list_h_r = flow.share_list_h_r();
+        QString str = QString::number(ui->doubleSpinBox_left_boundary->value());
+        for (unsigned long long i = 0; i < list_h_r.size(); i++) {
+            if(list_h_r[i][0] == 0){
+                str += " + " + QString::number(list_h_r[i][1]) + "sin((2pi / " + QString::number(list_h_r[i][2]) + ") * t)";
+            }
+            else if(list_h_r[i][0] == 1){
+                str += " + " + QString::number(list_h_r[i][1]) + "cos((2pi / " + QString::number(list_h_r[i][2]) + ") * t)";
+            }
+        };
+        ui->textBrowser_function_h_r->clear();
+        ui->textBrowser_function_h_r->append(str);
+    }
 }
 
