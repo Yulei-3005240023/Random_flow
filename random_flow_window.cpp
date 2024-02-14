@@ -1147,12 +1147,12 @@ void Random_flow_Window::on_draw_solve_line_as_clicked()
 {
     clear_chart_head();
 
-    QString title = "解析解与数值解对比图，绘图位置为右边界位置。";
+    QString title = "源汇项随时间变化的解析解图，绘图位置为右边界位置。";
     ui->graphicsView->setChart(chart_head);
     chart_head->setTitle(title);
     //series_head->setName("水头曲线: 数值解");
     series_analyze->setName("水头曲线: 解析解");
-    //series_head->setColor(QColorConstants::Red);
+    series_analyze->setColor(QColorConstants::Red);
     //std::vector<double>solve_fdm_l(flow.show_n());
 //    int a = ui->spinBox_X->value();
 //    int x_fdm = 0;
@@ -1330,5 +1330,123 @@ void Random_flow_Window::on_delete_wave_h_r_clicked()
         ui->textBrowser_function_h_r->clear();
         ui->textBrowser_function_h_r->append(str);
     }
+}
+
+
+void Random_flow_Window::on_draw_solve_line_as_hl_clicked()
+{
+
+    clear_chart_head();
+
+    QString title = "左边界随时间变化的解析解图，绘图位置为右边界位置。";
+    ui->graphicsView->setChart(chart_head);
+    chart_head->setTitle(title);
+    //series_head->setName("水头曲线: 数值解");
+    series_analyze->setName("水头曲线: 解析解");
+    series_analyze->setColor(QColorConstants::Red);
+    //std::vector<double>solve_fdm_l(flow.show_n());
+    //    int a = ui->spinBox_X->value();
+    //    int x_fdm = 0;
+    //    for (double h : solve_fdm.col(a)) {
+    //        solve_fdm_l[x_fdm] = h;
+    //        x_fdm += 1;
+    //    }
+    //    for (int n = 0; n < flow.show_n(); n++) {
+    //        series_head->append(n, solve_fdm_l[n]);
+    //    }
+
+    double x = 0.0;
+    double min_h = 800.0;
+    double max_h = 0.0;
+    Eigen::MatrixXd solve_an = flow.solve_an_h_l_t();
+    for (double h : solve_an.col((flow.show_m()-1))) {
+        series_analyze->append(x, h);
+        x += flow.show_st();
+        if(h < min_h) min_h = h;
+        if(h > max_h) max_h = h;
+    }
+
+    axis_x->setRange(0, flow.show_tl());
+    axis_x->setLabelFormat("%.2f"); // 标签格式
+    axis_x->setTickCount(11);
+    axis_x->setMinorTickCount(1);
+    axis_x->setTitleText("时间轴(d)");
+
+    chart_head->addAxis(axis_x, Qt::AlignBottom);
+    series_analyze->attachAxis(axis_x);
+
+    axis_head->setRange(min_h, max_h);
+    axis_head->setLabelFormat("%.4f"); // 标签格式
+    axis_head->setTickCount(11);
+    axis_head->setMinorTickCount(1);
+    axis_head->setTitleText("水头(m)");
+
+    chart_head->addAxis(axis_head, Qt::AlignLeft);
+    series_analyze->attachAxis(axis_head);
+
+    // 更新图表
+    chart_head->addSeries(series_analyze);
+    //    series_head->attachAxis(axis_x);
+    //    series_head->attachAxis(axis_head);
+    //    chart_head->addSeries(series_head);
+}
+
+void Random_flow_Window::on_use_white_noise_checkBox_h_l_clicked()
+{
+    left_boundary();
+    right_boundary();
+    if(ui->use_white_noise_checkBox_h_l->isChecked() == true)
+    {
+        flow.set_white_noise_h_l(1);
+    }
+    else
+    {
+        flow.set_white_noise_h_l(0);
+    }
+}
+
+
+void Random_flow_Window::on_time_field_figure_h_l_clicked()
+{
+    chart_W->removeSeries(series_W); // 清除原有图表
+    chart_W->removeAxis(axis_W);
+    chart_W->removeAxis(axis_w);
+    series_W->clear();
+
+    QString title = "左边界时域图像";
+    ui->graphicsView_W->setChart(chart_W);
+    chart_W->setTitle(title);
+    series_W->setName("左边界波动曲线");
+    int n = floor(flow.show_tl() / flow.show_st()) + 1;
+    double t = 0.0;
+    double min_h = 100.0;
+    double max_h = 0.0;
+    for(int i = 0; i < n; i++){
+        double h =flow.list_h_l_cal(t);
+        series_W->append(t, h);
+        t += flow.show_st();
+        if(h < min_h) min_h = h;
+        if(h > max_h) max_h = h;
+    }
+
+    axis_w->setRange(0, flow.show_tl());
+    axis_w->setGridLineVisible(false);
+    axis_w->setLabelFormat("%.1f"); // 标签格式
+    axis_w->setTickCount(6);
+    axis_w->setMinorTickCount(1);
+    axis_w->setTitleText("T轴(d)");
+
+    axis_W->setRange(min_h, max_h);
+    axis_W->setGridLineVisible(false);
+    axis_W->setLabelFormat("%.5f"); // 标签格式
+    axis_W->setTickCount(6);
+    axis_W->setMinorTickCount(1);
+    axis_W->setTitleText("水头(m)/通量");
+
+    chart_W->addSeries(series_W); // 更新图表
+    chart_W->addAxis(axis_w, Qt::AlignBottom);
+    chart_W->addAxis(axis_W, Qt::AlignLeft);
+    series_W->attachAxis(axis_w);
+    series_W->attachAxis(axis_W);
 }
 

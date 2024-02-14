@@ -303,7 +303,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_14">
       <property name="geometry">
        <rect>
-        <x>630</x>
+        <x>650</x>
         <y>0</y>
         <width>241</width>
         <height>130</height>
@@ -343,7 +343,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_15">
       <property name="geometry">
        <rect>
-        <x>870</x>
+        <x>890</x>
         <y>0</y>
         <width>231</width>
         <height>131</height>
@@ -365,9 +365,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_16">
       <property name="geometry">
        <rect>
-        <x>470</x>
+        <x>490</x>
         <y>0</y>
-        <width>160</width>
+        <width>151</width>
         <height>103</height>
        </rect>
       </property>
@@ -391,9 +391,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_17">
       <property name="geometry">
        <rect>
-        <x>1100</x>
+        <x>1140</x>
         <y>0</y>
-        <width>160</width>
+        <width>151</width>
         <height>103</height>
        </rect>
       </property>
@@ -413,6 +413,19 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QCheckBox" name="use_white_noise_checkBox_h_l">
+      <property name="geometry">
+       <rect>
+        <x>470</x>
+        <y>110</y>
+        <width>191</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>使用均匀分布的关系填充</string>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
@@ -660,7 +673,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_10">
       <property name="geometry">
        <rect>
-        <x>800</x>
+        <x>810</x>
         <y>0</y>
         <width>160</width>
         <height>80</height>
@@ -693,7 +706,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>251</width>
+        <width>301</width>
         <height>151</height>
        </rect>
       </property>
@@ -720,9 +733,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_7">
       <property name="geometry">
        <rect>
-        <x>250</x>
+        <x>400</x>
         <y>0</y>
-        <width>251</width>
+        <width>231</width>
         <height>151</height>
        </rect>
       </property>
@@ -753,7 +766,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>291</width>
+        <width>301</width>
         <height>151</height>
        </rect>
       </property>
@@ -780,10 +793,10 @@
      <widget class="QWidget" name="verticalLayoutWidget_8">
       <property name="geometry">
        <rect>
-        <x>290</x>
+        <x>360</x>
         <y>0</y>
         <width>276</width>
-        <height>139</height>
+        <height>151</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -849,8 +862,8 @@
      <widget class="QCheckBox" name="checkBox_use_MC">
       <property name="geometry">
        <rect>
-        <x>770</x>
-        <y>120</y>
+        <x>680</x>
+        <y>40</y>
         <width>181</width>
         <height>23</height>
        </rect>
@@ -884,6 +897,19 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QPushButton" name="draw_solve_line_as_hl">
+      <property name="geometry">
+       <rect>
+        <x>650</x>
+        <y>70</y>
+        <width>274</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>绘制右边界的解析解线型图(左边界波动)</string>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_6">

@@ -72,6 +72,7 @@ private:
 protected:
     bool use_white_noise_time;
     bool use_white_noise_length;
+    bool use_white_noise_h_l;
     //qint64 seed; // 随机数种子
     //QRandomGenerator *rand;
 
@@ -113,6 +114,8 @@ public:
 
     double source_sink_term(double x);
     double source_sink_term_x(double x);
+    double list_h_l_cal(double t);
+    double list_h_r_cal(double t);
 
     std::vector<std::vector<double>> share_list_source_sink_term();
     std::vector<std::vector<double>> share_list_source_sink_term_x();
@@ -121,7 +124,8 @@ public:
 
     Eigen::MatrixXd solve(int how_to_solve); // 数值解求解计算
     std::complex<double> M(double a, double x, double w, double l); // 解析解中的函数M
-    Eigen::MatrixXd solve_an_wt(); // 解析解求解计算
+    Eigen::MatrixXd solve_an_wt(); // 源汇项l_随时间变化的解析解求解计算
+    Eigen::MatrixXd solve_an_h_l_t(); // 左边界随时间变化的解析解求解计算
     Eigen::VectorXd fast_fourier_transfrom(Eigen::MatrixXd solution, int n); // 快速傅里叶变换代码
     Eigen::VectorXd power_spectral_density(Eigen::MatrixXd solution, int n); // 功率谱密度变换代码
     Eigen::VectorXd amplitude_complete_fdm(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解
@@ -134,9 +138,11 @@ public:
     void create_plate(); // 创建底板高程数组
     double plate_elevation(double i); // 底板高程数据输出
 
-    void set_white_noise_time(int s); // 生成均匀分布的白噪声
+    void set_white_noise_time(int s); // 生成均匀分布的白噪声（源汇项随时间变化）
     double actual_expectations_white_noise_time(); // 白噪声实际期望值计算
     double fangcha_white_noise_time(); // 白噪声实际方差计算
+
+    void set_white_noise_h_l(int s); // 生成均匀分布的白噪声(左边界)
 
 
 

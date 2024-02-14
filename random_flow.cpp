@@ -394,7 +394,6 @@ double Random_one_dimension_boussinesq:: source_sink_term(double t)
         };
         return w_;
     }
-
 }
 
 double Random_one_dimension_boussinesq:: source_sink_term_x(double x)
@@ -409,6 +408,41 @@ double Random_one_dimension_boussinesq:: source_sink_term_x(double x)
         }
     };
     return w_;
+}
+
+double Random_one_dimension_boussinesq:: list_h_l_cal(double t)
+{
+    if(use_white_noise_h_l == true)
+    {
+        return h_l_value[t/show_st()];
+    }
+    else
+    {
+        double h_ = h_l[1];
+        for (unsigned long long i = 0; i < list_h_l.size(); i++) {
+            if(list_h_l[i][0] == 0){
+                h_ += list_h_l[i][1] * std::sin(2 * 3.1514926 * (1 / list_h_l[i][2]) * t);
+            }
+            else if(list_h_l[i][0] == 1){
+                h_ += list_h_l[i][1] * std::cos(2 * 3.1514926 * (1 / list_h_l[i][2]) * t);
+            }
+        };
+        return h_;
+    }
+}
+
+double Random_one_dimension_boussinesq:: list_h_r_cal(double t)
+{
+    double h_ = h_r[1];
+    for (unsigned long long i = 0; i < list_h_r.size(); i++) {
+        if(list_h_r[i][0] == 0){
+            h_ += list_h_r[i][1] * std::sin(2 * 3.1514926 * (1 / list_h_r[i][2]) * t);
+        }
+        else if(list_h_r[i][0] == 1){
+            h_ += list_h_r[i][1] * std::cos(2 * 3.1514926 * (1 / list_h_r[i][2]) * t);
+        }
+    };
+    return h_;
 }
 
 std::vector<std::vector<double>> Random_one_dimension_boussinesq::share_list_source_sink_term()
@@ -469,34 +503,34 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 // 左边界赋值
                 else if((i - 1) < 0 && h_l[0] == 1){
                     H_a(l_a, l_a) = 1;
-                    H_b(l_a, 0) = h_l[1];
+                    H_b(l_a, 0) = list_h_l_cal(k * show_st());
                 }
                 else if((i - 1) < 0 && h_l[0] == 2){
                     // 源汇项赋值
                     H_b(l_a, 0) = - source_sink_term(k * show_st()) / K - source_sink_term_x(i * show_sl()) / K - Sy / (K * show_st()) * H_ALL(k - 1, i) -
-                                  2 * show_sl() * h_l[1] * (H_previous_iteration(0, i) + h_l[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
+                                  2 * show_sl() * list_h_l_cal(k * show_st()) * (H_previous_iteration(0, i) + list_h_l_cal(k * show_st()) * 0.5 * show_sl()) / (show_sl() * show_sl());
                     // 给位置为(i, k)处的水头赋上系数值
                     H_a(l_a, l_a) = -(H_previous_iteration(0, i + 1) + H_previous_iteration(0, i)) / (2 * show_sl() * show_sl()) -
-                                    (H_previous_iteration(0,i) + h_l[1] * 0.5 * show_sl()) / (show_sl() * show_sl()) - Sy / (K * show_st());
+                                    (H_previous_iteration(0,i) + list_h_l_cal(k * show_st()) * 0.5 * show_sl()) / (show_sl() * show_sl()) - Sy / (K * show_st());
                     // 给位置为(i+1, k)处的水头赋上系数值
                     H_a(l_a, l_a + 1) = (H_previous_iteration(0, i + 1) + H_previous_iteration(0, i)) / (
-                                            2 * show_sl() * show_sl()) + (H_previous_iteration(0, i) + h_l[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
+                                            2 * show_sl() * show_sl()) + (H_previous_iteration(0, i) +list_h_l_cal(k * show_st()) * 0.5 * show_sl()) / (show_sl() * show_sl());
                 }
                 // 右边界赋值
                 else if((i + 1) == show_m() && h_r[0] == 1){
                     H_a(l_a, l_a) = 1;
-                    H_b(l_a, 0) = h_r[1];
+                    H_b(l_a, 0) = list_h_r_cal(k * show_st());
                 }
                 else if((i + 1) == show_m() && h_r[0] == 2){
                     // 源汇项赋值
                     H_b(l_a, 0) = - source_sink_term(k * show_st()) / K - source_sink_term_x(i * show_sl()) / K - Sy / (K * show_st()) * H_ALL(k - 1, i) +
-                                  2 * show_sl() * h_r[1] * (H_previous_iteration(0, i) + h_r[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
+                                  2 * show_sl() * list_h_r_cal(k * show_st()) * (H_previous_iteration(0, i) + list_h_r_cal(k * show_st()) * 0.5 * show_sl()) / (show_sl() * show_sl());
                     // 给位置为(i, k)处的水头赋上系数值
-                    H_a(l_a, l_a) = - (H_previous_iteration(0, i) + h_r[1] * 0.5 * show_sl()) / (show_sl() * show_sl()) -
+                    H_a(l_a, l_a) = - (H_previous_iteration(0, i) + list_h_r_cal(k * show_st()) * 0.5 * show_sl()) / (show_sl() * show_sl()) -
                                     (H_previous_iteration(0, i) + H_previous_iteration(0, i - 1)) / (2 * show_sl() * show_sl()) - Sy / (K *show_st());
                     // 给位置为(i-1, k)处的水头赋上系数值
                     H_a(l_a, l_a - 1) = (H_previous_iteration(0, i) + H_previous_iteration(0, i - 1)) / (
-                                            2 * show_sl() * show_sl()) + (H_previous_iteration(0, i) + h_r[1] * 0.5 * show_sl()) / (show_sl() * show_sl());
+                                            2 * show_sl() * show_sl()) + (H_previous_iteration(0, i) + list_h_r_cal(k * show_st()) * 0.5 * show_sl()) / (show_sl() * show_sl());
                 }
                 // 非边界部分赋值
                 else{
@@ -570,7 +604,7 @@ std::complex<double> Random_one_dimension_boussinesq::M(double a, double x, doub
     std::complex<double>r2(-r1.real(), -r1.imag());
     std::complex<double> m;
     m = (r1 *exp(r1 * l)* exp(r2 * x) - r2 *exp(r2 * l)* exp(r1 * x)) / (r1 *exp(r1 * l) -  r2 *exp(r2 * l));
-    std::complex<double> m_(m.real()-1, m.imag());
+    std::complex<double> m_(m.real(), m.imag());
     return m_;
 }
 
@@ -617,7 +651,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
     }
 
     std::complex<double>j(0, 1); // 此式子代表虚数j
-    ///std::complex<double>one(1,0); // 代表实数1
+    std::complex<double>one(1,0); // 代表实数1
     // 求水头变化量离散傅里叶变换, 就右边界一条线
     std::vector<std::complex<double>> dft_h(show_n());
     // 按频率索引开始赋值
@@ -632,7 +666,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
             std::complex<double>wSy(wSy_real , 0);
             double kw = k * (1 /(show_st() *show_n()));
             std::complex<double>m = M(a, show_xl(), kw, show_xl());
-            Fh = ((j * dft_wt[k]) / wSy) * m;
+            Fh = ((j * dft_wt[k]) / wSy) * (m-one);
             dft_h[k] = Fh;
         }
     }
@@ -658,6 +692,82 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
 //    fftw_free(in);
 //    fftw_free(out);
 
+    for(int n = 0; n < show_n(); n++){
+        std::complex<double> h_(0,0);
+        for (int k = 0; k < show_n(); k++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (k * n)/ n_;
+            std::complex<double>eh(0, imag);
+            h_ = h_ + dft_h[k] * exp(eh);
+        }
+        h[n] = h_.real()* (1/(show_st() *show_n())) / 3.1415926;
+    }
+    for(int n = 0; n < show_n(); n++){
+        H_ALL(n, (show_m() - 1)) = h[n] + show_ic();
+    }
+    return H_ALL;
+}
+
+Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_h_l_t()
+{
+    a_(); // 重新计算压力扩散系数a
+    Eigen::MatrixXd H_ALL(show_n(), show_m());//创建一个矩阵，用于存放各个离散位置的水头值
+    H_ALL.setZero();
+    std::vector<double> ht(show_n()); // 离散化左边界储存数组
+    double t = 0.0;
+    // 离散化左边界赋值
+    for(int i = 0; i < show_n(); i++){
+        ht[i] = list_h_l_cal(t) - h_l[1];
+        t += show_st();
+    }
+    // 把左边界做离散傅里叶变换
+    std::vector<std::complex<double>> dft_hlt(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        std::complex<double>Fw(0, 0);
+        for (int n = 0; n < show_n(); n++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (-1 /* 2 * 3.1415926 */* k * n )/ n_;
+            std::complex<double>eF(0, imag);
+            std::complex<double>F_ = ht[n] * exp(eF);
+            Fw = Fw + F_;
+        }
+        Fw = Fw * show_st();
+        dft_hlt[k] = Fw;
+    }
+
+//    std::vector<std::complex<double>> dft_wt(show_n());
+//        // 创建输出数组，用于存储FFT结果
+//    fftw_complex *out_w = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
+//    // 创建FFT计划
+//    fftw_plan plan_w = fftw_plan_dft_r2c_1d(show_n(), ht.data(), out_w, FFTW_ESTIMATE);
+//    // 执行FFT计算
+//    fftw_execute(plan_w);
+//    for(int k = 0; k < show_n(); k++){
+//        dft_wt[k] = std::complex<double>(out_w[k][0], out_w[k][1]);
+//    }
+//    // 释放资源
+//    fftw_destroy_plan(plan_w);
+//    fftw_free(out_w);
+
+    // 求水头变化量离散傅里叶变换, 就右边界一条线
+    std::vector<std::complex<double>> dft_h(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        if(k == 0){ // 初始条件为0
+            std::complex<double>Fh0(0, 0);
+            dft_h[k] = Fh0;
+        }
+        else{
+            std::complex<double>Fh(0, 0);
+            double kw = k * (1 /(show_st() *show_n()));
+            std::complex<double>m = M(a, show_xl(), kw, show_xl());
+            Fh = dft_hlt[k] * m;
+            dft_h[k] = Fh;
+        }
+    }
+    // 水头变化的傅里叶逆变换
+    std::vector<double>h(show_n());
     for(int n = 0; n < show_n(); n++){
         std::complex<double> h_(0,0);
         for (int k = 0; k < show_n(); k++) {
@@ -871,4 +981,24 @@ double Random_one_dimension_boussinesq::fangcha_white_noise_time()
         d += (i - expectations) * (i - expectations);
     }
     return d / show_n();
+}
+
+void Random_one_dimension_boussinesq::set_white_noise_h_l(int s) // 设置是否启用白噪声模式
+{
+    if(s==0) use_white_noise_h_l = false;
+    else
+    {
+        set_n_m();
+        h_l_value.clear();
+        // 创建一个随机数引擎
+        double t0 = time(0); // 使用当前系统时间戳为随机数种子
+        std::mt19937 gen(t0); // 使用Mersenne Twister引擎
+        // 定义两个随机数分布器
+        std::uniform_real_distribution<> dis(0.95 * h_l[1], 1.05 * h_l[1]); // 生成0.95 * h_l[1]~ 1.05 * h_l[1]均匀分布的随机小数
+        use_white_noise_h_l = true;
+        for(int i=0;i<show_n();i++)
+        {
+            h_l_value.emplace_back(dis(gen));// 白噪声数值填充
+        }
+    }
 }

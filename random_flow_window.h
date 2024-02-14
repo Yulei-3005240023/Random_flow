@@ -124,12 +124,17 @@ private slots:
 
     void on_random_new_wave_h_l_clicked();
 
+    void on_draw_solve_line_as_hl_clicked();
+
     void on_delete_wave_h_l_clicked();
 
     void on_random_new_wave_h_r_clicked();
 
-
     void on_delete_wave_h_r_clicked();
+
+    void on_use_white_noise_checkBox_h_l_clicked();
+
+    void on_time_field_figure_h_l_clicked();
 
 private:
     Ui::Random_flow_Window *ui;
