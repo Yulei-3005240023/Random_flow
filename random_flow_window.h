@@ -150,6 +150,8 @@ private slots:
 
 
 
+    void on_draw_fenli_clicked();
+
 private:
     Ui::Random_flow_Window *ui;
     Random_one_dimension_boussinesq flow; // 实例化具象潜水一维随机流

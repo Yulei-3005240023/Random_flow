@@ -918,6 +918,19 @@
        </item>
       </layout>
      </widget>
+     <widget class="QPushButton" name="draw_fenli">
+      <property name="geometry">
+       <rect>
+        <x>1270</x>
+        <y>10</y>
+        <width>121</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>分离变量法绘图</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_6">
      <attribute name="title">

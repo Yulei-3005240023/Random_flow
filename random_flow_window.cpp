@@ -1671,3 +1671,47 @@ void Random_flow_Window::on_draw_solve_line_as_wt_hl_clicked()
     chart_head->addSeries(series_analyze);
 }
 
+void Random_flow_Window::on_draw_fenli_clicked()
+{
+    clear_chart_head();
+
+    QString title = "左边界随时间变化的分离变量法解析解图，绘图位置为右边界位置。";
+    ui->graphicsView->setChart(chart_head);
+    chart_head->setTitle(title);
+    series_analyze->setName("水头曲线: 解析解");
+    series_analyze->setColor(QColorConstants::Red);
+
+    double x = 0.0;
+    double min_h = 800.0;
+    double max_h = 0.0;
+    double h = 0.0;
+    for (int i = 0; i<flow.show_n(); i++) {
+        h = flow.solve_an_fenlibianliang(flow.show_xl(), x,flow.show_xl());
+        series_analyze->append(x, h);
+        x += flow.show_st();
+        if(h < min_h) min_h = h;
+        if(h > max_h) max_h = h;
+    }
+
+    axis_x->setRange(0, flow.show_tl());
+    axis_x->setLabelFormat("%.2f"); // 标签格式
+    axis_x->setTickCount(11);
+    axis_x->setMinorTickCount(1);
+    axis_x->setTitleText("时间轴(d)");
+
+    chart_head->addAxis(axis_x, Qt::AlignBottom);
+    series_analyze->attachAxis(axis_x);
+
+    axis_head->setRange(min_h, max_h);
+    axis_head->setLabelFormat("%.4f"); // 标签格式
+    axis_head->setTickCount(11);
+    axis_head->setMinorTickCount(1);
+    axis_head->setTitleText("水头(m)");
+
+    chart_head->addAxis(axis_head, Qt::AlignLeft);
+    series_analyze->attachAxis(axis_head);
+
+    // 更新图表
+    chart_head->addSeries(series_analyze);
+}
+

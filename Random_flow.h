@@ -123,6 +123,9 @@ public:
     std::vector<std::vector<double>> share_list_h_r();
 
     Eigen::MatrixXd solve(int how_to_solve); // 数值解求解计算
+    double solve_an_steady(double k_, double ha_, double x, double l); // 稳定流状态下的解析解
+    double M_fenli(double x, double t, double a, double l, int times); // 分离变量法中的M
+    double solve_an_fenlibianliang(double x, double t, double l); // 分离变量法解析解
     std::complex<double> M(double a, double x, double w, double l); // 解析解中的函数M
     Eigen::MatrixXd solve_an_wt(); // 源汇项随时间变化的解析解求解计算
     Eigen::MatrixXd solve_an_h_l_t(); // 左边界随时间变化的解析解求解计算
