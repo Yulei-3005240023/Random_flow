@@ -42,7 +42,7 @@
      <bool>false</bool>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>5</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -283,7 +283,7 @@
        <rect>
         <x>240</x>
         <y>0</y>
-        <width>231</width>
+        <width>221</width>
         <height>131</height>
        </rect>
       </property>
@@ -303,7 +303,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_14">
       <property name="geometry">
        <rect>
-        <x>650</x>
+        <x>680</x>
         <y>0</y>
         <width>241</width>
         <height>130</height>
@@ -343,7 +343,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_15">
       <property name="geometry">
        <rect>
-        <x>890</x>
+        <x>920</x>
         <y>0</y>
         <width>231</width>
         <height>131</height>
@@ -365,13 +365,20 @@
      <widget class="QWidget" name="verticalLayoutWidget_16">
       <property name="geometry">
        <rect>
-        <x>490</x>
+        <x>470</x>
         <y>0</y>
-        <width>151</width>
-        <height>103</height>
+        <width>191</width>
+        <height>131</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_16">
+       <item>
+        <widget class="QCheckBox" name="use_white_noise_checkBox_h_l">
+         <property name="text">
+          <string>使用均匀分布的关系填充</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QPushButton" name="time_field_figure_h_l">
          <property name="text">
@@ -391,7 +398,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_17">
       <property name="geometry">
        <rect>
-        <x>1140</x>
+        <x>1180</x>
         <y>0</y>
         <width>151</width>
         <height>103</height>
@@ -413,19 +420,6 @@
         </widget>
        </item>
       </layout>
-     </widget>
-     <widget class="QCheckBox" name="use_white_noise_checkBox_h_l">
-      <property name="geometry">
-       <rect>
-        <x>470</x>
-        <y>110</y>
-        <width>191</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>使用均匀分布的关系填充</string>
-      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
@@ -793,7 +787,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_8">
       <property name="geometry">
        <rect>
-        <x>360</x>
+        <x>340</x>
         <y>0</y>
         <width>276</width>
         <height>151</height>
@@ -808,13 +802,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="draw_solve_line_as">
-         <property name="text">
-          <string>绘制右边界的解析解线型图(源汇项波动)</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="draw_solve_line_location_fft">
          <property name="text">
           <string>绘制频域图像</string>
@@ -822,94 +809,114 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="draw_solve_line_as">
+         <property name="text">
+          <string>绘制右边界的解析解线型图(源汇项波动)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="amplitude_complete_figure">
          <property name="text">
-          <string>功率谱振幅对比图</string>
+          <string>功率谱振幅对比图(源汇项波动)</string>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="MC_un_wt_amp_start">
+     <widget class="QWidget" name="verticalLayoutWidget_18">
       <property name="geometry">
        <rect>
-        <x>930</x>
+        <x>640</x>
         <y>0</y>
-        <width>251</width>
-        <height>41</height>
+        <width>276</width>
+        <height>134</height>
        </rect>
       </property>
-      <property name="text">
-       <string>边界位置功率谱蒙特卡洛数值模拟</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QProgressBar" name="progressBar_MC_uwt">
-      <property name="geometry">
-       <rect>
-        <x>930</x>
-        <y>80</y>
-        <width>251</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="value">
-       <number>99</number>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="checkBox_use_MC">
-      <property name="geometry">
-       <rect>
-        <x>680</x>
-        <y>40</y>
-        <width>181</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>使用蒙特卡洛数据绘图</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_7">
-      <property name="geometry">
-       <rect>
-        <x>930</x>
-        <y>40</y>
-        <width>251</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_8">
+      <layout class="QVBoxLayout" name="verticalLayout_18">
        <item>
-        <widget class="QLabel" name="label_13">
+        <widget class="QCheckBox" name="checkBox_use_MC">
          <property name="text">
-          <string>模拟次数：</string>
+          <string>使用蒙特卡洛数据绘图</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBox_MC_un_wt_amp">
-         <property name="maximum">
-          <number>99999</number>
+        <widget class="QPushButton" name="draw_solve_line_as_hl">
+         <property name="text">
+          <string>绘制右边界的解析解线型图(左边界波动)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="amplitude_complete_figure_hl">
+         <property name="text">
+          <string>功率谱振幅对比图(左边界波动)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="draw_solve_line_as_wt_hl">
+         <property name="text">
+          <string>绘制右边界解析解线型图(双波动叠加)</string>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="draw_solve_line_as_hl">
+     <widget class="QWidget" name="verticalLayoutWidget_19">
       <property name="geometry">
        <rect>
-        <x>650</x>
-        <y>70</y>
-        <width>274</width>
-        <height>29</height>
+        <x>940</x>
+        <y>0</y>
+        <width>321</width>
+        <height>136</height>
        </rect>
       </property>
-      <property name="text">
-       <string>绘制右边界的解析解线型图(左边界波动)</string>
-      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_19">
+       <item>
+        <widget class="QPushButton" name="MC_un_wt_amp_start">
+         <property name="text">
+          <string>边界位置功率谱蒙特卡洛数值模拟(源汇项波动)</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="MC_un_hl_amp_start">
+         <property name="text">
+          <string>边界位置功率谱蒙特卡洛数值模拟(左边界波动)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>模拟次数：</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_MC_un_wt_amp">
+           <property name="maximum">
+            <number>99999</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar_MC_uwt">
+         <property name="value">
+          <number>99</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_6">
@@ -1099,6 +1106,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="actionsave_MC"/>
     <addaction name="actionsave_as"/>
     <addaction name="actionsave_as_complete"/>
+    <addaction name="actionsave_as_hl"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -1141,6 +1149,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>保存当前解析解数据(振幅比)</string>
    </property>
   </action>
+  <action name="actionsave_as_hl">
+   <property name="text">
+    <string>保存当前解析解数据(左边界波动)</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -1175,11 +1188,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <tabstop>textBrowser_X</tabstop>
   <tabstop>spinBox_X</tabstop>
   <tabstop>draw_solve_line_location</tabstop>
-  <tabstop>draw_solve_line_location_fft</tabstop>
   <tabstop>solve_FDM</tabstop>
   <tabstop>pushButton</tabstop>
   <tabstop>textBrowser</tabstop>
-  <tabstop>graphicsView</tabstop>
  </tabstops>
  <resources/>
  <connections/>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>set_new_wave</class>
- <widget class="QDialog" name="set_new_wave">
+ <class>set_new_wave_h</class>
+ <widget class="QDialog" name="set_new_wave_h">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,13 +11,13 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>设置源汇项波动</string>
+   <string>设置左边界波动</string>
   </property>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>20</y>
+     <y>10</y>
      <width>361</width>
      <height>251</height>
     </rect>
@@ -59,7 +59,7 @@
       <item>
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>降雨量波动周期（单位：天）</string>
+         <string>水头/通量 波动周期（单位：天）</string>
         </property>
        </widget>
       </item>
@@ -80,7 +80,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>降雨量振幅（mm）</string>
+         <string>水头/通量 振幅（m）/无量纲</string>
         </property>
        </widget>
       </item>
@@ -95,24 +95,11 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="save">
-   <property name="geometry">
-    <rect>
-     <x>140</x>
-     <y>330</y>
-     <width>93</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>保存</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="back">
    <property name="geometry">
     <rect>
      <x>240</x>
-     <y>330</y>
+     <y>320</y>
      <width>93</width>
      <height>28</height>
     </rect>
@@ -121,18 +108,31 @@
     <string>返回</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="save">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>320</y>
+     <width>93</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>保存</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>
   <connection>
    <sender>back</sender>
    <signal>clicked()</signal>
-   <receiver>set_new_wave</receiver>
+   <receiver>set_new_wave_h</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>286</x>
-     <y>343</y>
+     <y>333</y>
     </hint>
     <hint type="destinationlabel">
      <x>182</x>

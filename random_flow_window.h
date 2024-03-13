@@ -26,11 +26,13 @@ public:
     void save_the_data(QString filename, int model);
 
 public slots:
-    void get_wave_info(double cycle, double amplitue); // 主窗口获得波动信息的槽函数
+    void get_wave_info(int type, double cycle, double amplitue); // 主窗口获得波动信息的槽函数
+    void get_wave_info_h_l(int type, double cycle, double amplitue);
 
     void get_MC_times(int time); // 主窗口获得蒙特卡洛模拟进行次数的槽函数
     void get_MC_amplitude_complete_fdm(Eigen::VectorXd vector1); // 主窗口获得蒙特卡洛模拟结果的槽函数
-    void get_MC_finished(); //获得进程结束的槽函数
+    void get_MC_finished(); //获得进程结束的槽函数(源汇项)
+    void get_MC_hl_finished(); //获得进程结束的槽函数(左边界)
 
     //2号线程对应的槽函数
     void get_MC_times_1(int time); // 主窗口获得蒙特卡洛模拟进行次数的槽函数
@@ -102,7 +104,7 @@ private slots:
 
     void on_power_spectral_density_figure_clicked();
 
-    void on_amplitude_complete_figure_clicked();
+    void on_amplitude_complete_figure_clicked(); // 功率谱振幅对比图（源汇项）
 
     void on_actionsave_fdm_triggered(); // 储存数值解
 
@@ -120,21 +122,33 @@ private slots:
 
     void on_actionsave_as_complete_triggered();
 
+    void on_actionsave_as_hl_triggered();
+
     void on_doubleSpinBox_right_boundary_valueChanged(double arg1);
 
     void on_random_new_wave_h_l_clicked();
 
-    void on_draw_solve_line_as_hl_clicked();
+    void on_new_wave_h_l_clicked();
 
     void on_delete_wave_h_l_clicked();
 
+    void on_draw_solve_line_as_hl_clicked();
+
     void on_random_new_wave_h_r_clicked();
+
+    void on_amplitude_complete_figure_hl_clicked(); // 功率谱振幅对比图（左边界）
+
+    void on_draw_solve_line_as_wt_hl_clicked();  // 叠加状态解析解绘图
 
     void on_delete_wave_h_r_clicked();
 
     void on_use_white_noise_checkBox_h_l_clicked();
 
     void on_time_field_figure_h_l_clicked();
+
+    void on_MC_un_hl_amp_start_clicked();  // 关于左边界随时间成均匀分布的蒙特卡洛线程启动函数
+
+
 
 private:
     Ui::Random_flow_Window *ui;
@@ -162,7 +176,8 @@ private:
     bool move_the_chart;
     bool select_the_chart;
 
-    Eigen::VectorXd MC_amplitude_complete_fdm; // 蒙特卡洛数值模拟的功率谱结果矩阵存放(总控)
+    Eigen::VectorXd MC_amplitude_complete_fdm; // 源汇项随时间变化的蒙特卡洛数值模拟的功率谱结果矩阵存放(总控)
+    Eigen::VectorXd MC_amplitude_complete_hl_fdm; // 左边界随时间变化的蒙特卡洛数值模拟的功率谱结果矩阵存放(总控)
     Eigen::VectorXd MC_amplitude_complete_fdm_1; // 蒙特卡洛数值模拟的功率谱结果矩阵存放(线程1)
     Eigen::VectorXd MC_amplitude_complete_fdm_2; // 蒙特卡洛数值模拟的功率谱结果矩阵存放(线程2)
     int MC_times; // 设定的蒙特卡洛模拟次数
@@ -172,6 +187,8 @@ private:
     MCThread_uniform_wt_amp *MCThread_uniform_wt_amp2; // 源汇项随时间均匀分布的振幅的蒙特卡洛模拟线程2
     bool MCThread_uniform_wt_amp1_work = false; // 线程1是否工作
     bool MCThread_uniform_wt_amp2_work = false; // 线程2是否工作
+    MCThread_uniform_hl_amp *MCThread_uniform_hl_amp1; // 左边界随时间均匀分布的振幅的蒙特卡洛模拟线程1
+    bool MCThread_uniform_hl_amp1_work = false; // 线程1是否工作
     bool use_MC_to_draw = false; // 是否使用蒙特卡洛的数据去绘图
     QMutex mutex; // 互斥量，用于确保线程之间不会冲突
 };

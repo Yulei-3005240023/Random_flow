@@ -23,8 +23,10 @@ void set_new_wave::set_text(double we)
 
 void set_new_wave::on_save_clicked()
 {
+    int type = 0;
+    if(ui->radioButton_sin->isChecked()) type = 0;
+    else if(ui->radioButton_cos->isChecked()) type = 1;
     double cycle = ui->doubleSpinBox_cycle->value();
     double amplitude = ui->doubleSpinBox_amplitude->value() / 1000;
-    emit wave_info(cycle, amplitude); // 发射信号
+    emit wave_info(type, cycle, amplitude); // 发射信号
 }
-

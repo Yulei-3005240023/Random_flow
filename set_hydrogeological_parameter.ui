@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>设置水文地质学参数</string>
   </property>
   <widget class="QWidget" name="horizontalLayoutWidget_2">
    <property name="geometry">

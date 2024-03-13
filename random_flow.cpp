@@ -383,7 +383,8 @@ double Random_one_dimension_boussinesq:: source_sink_term(double t)
     }
     else
     {
-        double w_ = 0; //  w_ = we
+        if(list_source_sink_term.size() == 0) return we; // 在不设随机波动以及，给定波动的情况下，输出源汇项期望值
+        double w_ = 0; //  w_ = we;
         for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
             if(list_source_sink_term[i][0] == 0){
                 w_ += list_source_sink_term[i][1] * std::sin(2 * 3.1514926 * (1 / list_source_sink_term[i][2]) * t);
@@ -586,7 +587,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
                 }
             }
             if(iteration_times > 10000){
-                //std::cout<<iteration_times<<std::endl;
+                //qDebug()<<iteration_times;
                 break;
             }
         }
@@ -597,8 +598,9 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
     }
     return H_ALL;
 }
+
 std::complex<double> Random_one_dimension_boussinesq::M(double a, double x, double w, double l){
-    double imag_r = /*2 * 3.1415926 */ w / a;
+    double imag_r = w / a;
     std::complex<double>r(0,  imag_r);
     std::complex<double>r1 = sqrt(r) ;
     std::complex<double>r2(-r1.real(), -r1.imag());
@@ -615,33 +617,47 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
     H_ALL.setZero();
     std::vector<double> wt(show_n()); // 离散化源汇项储存数组
     double t = 0.0;
+    // 把源汇项做离散傅里叶变换
+    std::vector<std::complex<double>> dft_wt(show_n());
+    std::vector<std::complex<double>> dft_wt_fftw(show_n());
     // 离散化源汇项赋值
+//    // 判定是否唯一常数
+//    if(list_source_sink_term.size() == 0 && use_white_noise_time == false){
+//        // 按频率索引开始赋值
+//        for(int k = 0; k < show_n(); k++){
+//            if(k == 0){
+//                dft_wt[k] = we * show_n();
+//            }
+//            else{
+//                dft_wt[k] = 0.0001;
+//            }
+//        }
+//    }
+
     for(int i = 0; i < show_n(); i++){
         wt[i] = source_sink_term(t);
         t += show_st();
     }
-    // 把源汇项做离散傅里叶变换
-    std::vector<std::complex<double>> dft_wt(show_n());
 
-/*    // 创建输出数组，用于存储FFT结果
+    // 创建输出数组，用于存储FFT结果
     fftw_complex *out_w = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
     // 创建FFT计划
     fftw_plan plan_w = fftw_plan_dft_r2c_1d(show_n(), wt.data(), out_w, FFTW_ESTIMATE);
     // 执行FFT计算
     fftw_execute(plan_w);
     for(int k = 0; k < show_n(); k++){
-        dft_wt[k] = std::complex<double>(out_w[k][0], out_w[k][1]);
+        dft_wt_fftw[k] = std::complex<double>(out_w[k][0], out_w[k][1]);
     }
     // 释放资源
     fftw_destroy_plan(plan_w);
-    fftw_free(out_w)*/;
+    fftw_free(out_w);
 
     // 按频率索引开始赋值
     for(int k = 0; k < show_n(); k++){
         std::complex<double>Fw(0, 0);
-        for (int n = 0; n < show_n(); n++) {
+        for (int n = 0; n < show_n(); n++){
             double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
-            double imag = (-1 /* 2 * 3.1415926*/ * k * n )/ n_;
+            double imag = (-1 * k * n )/ n_;
             std::complex<double>eF(0, imag);
             std::complex<double>F_ = wt[n] * exp(eF);
             Fw = Fw + F_;
@@ -651,7 +667,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
     }
 
     std::complex<double>j(0, 1); // 此式子代表虚数j
-    std::complex<double>one(1,0); // 代表实数1
+    //std::complex<double>one(1,0); // 代表实数1
     // 求水头变化量离散傅里叶变换, 就右边界一条线
     std::vector<std::complex<double>> dft_h(show_n());
     // 按频率索引开始赋值
@@ -662,17 +678,19 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
         }
         else{
             std::complex<double>Fh(0, 0);
-            double wSy_real = k * (1 /(show_st() *show_n()))* Sy /* * 2 * 3.1415926*/;
+            double wSy_real = k / (show_st() *show_n())* Sy;
             std::complex<double>wSy(wSy_real , 0);
-            double kw = k * (1 /(show_st() *show_n()));
+            double kw = k / (show_st() * show_n());
             std::complex<double>m = M(a, show_xl(), kw, show_xl());
-            Fh = ((j * dft_wt[k]) / wSy) * (m-one);
+            Fh = ((j * dft_wt[k]) / wSy) * m - ((j * dft_wt[k]) / wSy);
             dft_h[k] = Fh;
         }
     }
+
     // 水头变化的傅里叶逆变换
     std::vector<double>h(show_n());
-//    std::vector<double>h_(show_n());
+
+//    std::vector<double>h_fftw(show_n());
 //    // 输入和输出数组
 //    fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
 //    for(int k=0;k<show_n();k++){
@@ -685,7 +703,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
 //    // 执行逆变换
 //    fftw_execute(plan);
 //    for(int n = 0; n < show_n(); n++){
-//        h_[n] = out[n] / show_n();
+//        h_fftw[n] = out[n] / show_n();
 //    }
 //    // 释放资源
 //    fftw_destroy_plan(plan);
@@ -702,6 +720,37 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
         }
         h[n] = h_.real()* (1/(show_st() *show_n())) / 3.1415926;
     }
+
+    // 误差补偿
+    double h_wucha = 0 - h[0];
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        if(k == 0){ // 初始条件为0
+            std::complex<double>Fh0(h_wucha * show_n(), 0);
+            dft_h[k] = Fh0;
+        }
+        else{
+            std::complex<double>Fh(0, 0);
+            double wSy_real = k / (show_st() *show_n())* Sy;
+            std::complex<double>wSy(wSy_real , 0);
+            double kw = k / (show_st() * show_n());
+            std::complex<double>m = M(a, show_xl(), kw, show_xl());
+            Fh = ((j * dft_wt[k]) / wSy) * m - ((j * dft_wt[k]) / wSy);
+            dft_h[k] = Fh;
+        }
+    }
+
+    for(int n = 0; n < show_n(); n++){
+        std::complex<double> h_(0,0);
+        for (int k = 0; k < show_n(); k++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (k * n)/ n_;
+            std::complex<double>eh(0, imag);
+            h_ = h_ + dft_h[k] * exp(eh);
+        }
+        h[n] = h_.real()* (1/(show_st() *show_n())) / 3.1415926;
+    }
+
     for(int n = 0; n < show_n(); n++){
         H_ALL(n, (show_m() - 1)) = h[n] + show_ic();
     }
@@ -727,7 +776,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_h_l_t()
         std::complex<double>Fw(0, 0);
         for (int n = 0; n < show_n(); n++) {
             double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
-            double imag = (-1 /* 2 * 3.1415926 */* k * n )/ n_;
+            double imag = (-1 * 2 * 3.1415926 * k * n )/ n_;
             std::complex<double>eF(0, imag);
             std::complex<double>F_ = ht[n] * exp(eF);
             Fw = Fw + F_;
@@ -760,12 +809,217 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_h_l_t()
         }
         else{
             std::complex<double>Fh(0, 0);
-            double kw = k * (1 /(show_st() *show_n()));
+            double kw = 6.28 * k * (1 /(show_st() *show_n()));
             std::complex<double>m = M(a, show_xl(), kw, show_xl());
             Fh = dft_hlt[k] * m;
             dft_h[k] = Fh;
         }
     }
+
+//    std::vector<double>h_fftw(show_n());
+//    // 输入和输出数组
+//    fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
+//    for(int k=0;k<show_n();k++){
+//        in[k][0] = dft_h[k].real();
+//        in[k][1] = dft_h[k].imag();
+//    }
+//    double* out = (double*) fftw_malloc(sizeof(double) * show_n());
+//    // 创建逆变换计划
+//    fftw_plan plan = fftw_plan_dft_c2r_1d(show_n(), in, out, FFTW_ESTIMATE);
+//    // 执行逆变换
+//    fftw_execute(plan);
+//    for(int n = 0; n < show_n(); n++){
+//        h_fftw[n] = out[n] / show_n();
+//    }
+//    // 释放资源
+//    fftw_destroy_plan(plan);
+//    fftw_free(in);
+//    fftw_free(out);
+
+    // 水头变化的傅里叶逆变换
+    std::vector<double>h(show_n());
+    for(int n = 0; n < show_n(); n++){
+        std::complex<double> h_(0,0);
+        //double h__ = 0;
+        for (int k = 0; k < show_n(); k++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = 2 * 3.1415926 * (k * n)/ n_;
+            std::complex<double>eh(0, imag);
+            h_ = h_ + dft_h[k] * exp(eh);
+        //h__ = dft_h[k].real() * std::cos(2.0 * M_PI * k * n / n_) - dft_h[k].imag() * std::sin(2.0 * M_PI * k * n / n_);
+        }
+        h[n] = h_.real() * (1/(show_st() *show_n())) * 2;// 3.1415926;
+        //h[n] = h__ / show_n();
+    }
+    for(int n = 0; n < show_n(); n++){
+        H_ALL(n, (show_m() - 1)) = h[n] + show_ic();
+    }
+    return H_ALL;
+}
+
+Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt_h_l_t()
+{  // 源汇项随时间变化与左边界随时间变化的解析解求解计算
+    a_(); // 重新计算压力扩散系数a
+    Eigen::MatrixXd H_ALL(show_n(), show_m());//创建一个矩阵，用于存放各个离散位置的水头值
+    H_ALL.setZero();
+
+    std::vector<double> ht(show_n()); // 离散化左边界储存数组
+    double t = 0.0;
+    // 离散化左边界赋值
+    for(int i = 0; i < show_n(); i++){
+        ht[i] = list_h_l_cal(t) - h_l[1];
+        t += show_st();
+    }
+    // 把左边界做离散傅里叶变换
+    std::vector<std::complex<double>> dft_hlt(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        std::complex<double>Fw(0, 0);
+        for (int n = 0; n < show_n(); n++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (-1 * 2 * 3.1415926 * k * n )/ n_;
+            std::complex<double>eF(0, imag);
+            std::complex<double>F_ = ht[n] * exp(eF);
+            Fw = Fw + F_;
+        }
+        Fw = Fw * show_st();
+        dft_hlt[k] = Fw;
+    }
+
+    std::vector<double> wt(show_n()); // 离散化源汇项储存数组
+    double t_ = 0.0;
+    // 离散化源汇项赋值
+    for(int i = 0; i < show_n(); i++){
+        wt[i] = source_sink_term(t_);
+        t_ += show_st();
+    }
+    // 把源汇项做离散傅里叶变换
+    std::vector<std::complex<double>> dft_wt(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        std::complex<double>Fw(0, 0);
+        for (int n = 0; n < show_n(); n++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (-1 * 2 * 3.1415926 * k * n )/ n_;
+            std::complex<double>eF(0, imag);
+            std::complex<double>F_ = wt[n] * exp(eF);
+            Fw = Fw + F_;
+        }
+        Fw = Fw * show_st();
+        dft_wt[k] = Fw;
+    }
+
+    std::complex<double>j(0, 1); // 此式子代表虚数j
+    // 求水头变化量离散傅里叶变换, 就右边界一条线
+    std::vector<std::complex<double>> dft_h(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        if(k == 0){ // 初始条件为0
+            std::complex<double>Fh0(0, 0);
+            dft_h[k] = Fh0;
+        }
+        else{
+            std::complex<double>Fh(0, 0);
+            double wSy_real = k * (1 /(show_st() *show_n()))* Sy * 6.2831852;
+            std::complex<double>wSy(wSy_real , 0);
+            double kw = 6.2831852 * k * (1 /(show_st() *show_n()));
+            std::complex<double>m = M(a, show_xl(), kw, show_xl());
+            Fh = (((j * dft_wt[k]) / wSy) + dft_hlt[k])* m - ((j * dft_wt[k]) / wSy);
+            dft_h[k] = Fh;
+        }
+    }
+
+    // 水头变化的傅里叶逆变换
+    std::vector<double>h(show_n());
+    for(int n = 0; n < show_n(); n++){
+        std::complex<double> h_(0,0);
+        for (int k = 0; k < show_n(); k++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (6.2831852 * k * n)/ n_;
+            std::complex<double>eh(0, imag);
+            h_ = h_ + dft_h[k] * exp(eh);
+        }
+        h[n] = h_.real()* (1/(show_st() *show_n())) *2; // 3.1415926;
+    }
+    for(int n = 0; n < show_n(); n++){
+        H_ALL(n, (show_m() - 1)) = h[n] + show_ic();
+    }
+    return H_ALL;
+}
+
+Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt_h_l_t_half()
+{
+    // 源汇项随时间变化与左边界随时间变化的解析解求解计算(x = l/2时)
+    a_(); // 重新计算压力扩散系数a
+    Eigen::MatrixXd H_ALL(show_n(), show_m());//创建一个矩阵，用于存放各个离散位置的水头值
+    H_ALL.setZero();
+
+    std::vector<double> ht(show_n()); // 离散化左边界储存数组
+    double t = 0.0;
+    // 离散化左边界赋值
+    for(int i = 0; i < show_n(); i++){
+        ht[i] = list_h_l_cal(t) - h_l[1];
+        t += show_st();
+    }
+    // 把左边界做离散傅里叶变换
+    std::vector<std::complex<double>> dft_hlt(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        std::complex<double>Fw(0, 0);
+        for (int n = 0; n < show_n(); n++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (-1 /* 2 * 3.1415926 */* k * n )/ n_;
+            std::complex<double>eF(0, imag);
+            std::complex<double>F_ = ht[n] * exp(eF);
+            Fw = Fw + F_;
+        }
+        Fw = Fw * show_st();
+        dft_hlt[k] = Fw;
+    }
+
+    std::vector<double> wt(show_n()); // 离散化源汇项储存数组
+    double t_ = 0.0;
+    // 离散化源汇项赋值
+    for(int i = 0; i < show_n(); i++){
+        wt[i] = source_sink_term(t_);
+        t_ += show_st();
+    }
+    // 把源汇项做离散傅里叶变换
+    std::vector<std::complex<double>> dft_wt(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        std::complex<double>Fw(0, 0);
+        for (int n = 0; n < show_n(); n++) {
+            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            double imag = (-1 /* 2 * 3.1415926*/ * k * n )/ n_;
+            std::complex<double>eF(0, imag);
+            std::complex<double>F_ = wt[n] * exp(eF);
+            Fw = Fw + F_;
+        }
+        Fw = Fw * show_st();
+        dft_wt[k] = Fw;
+    }
+
+    std::complex<double>j(0, 1); // 此式子代表虚数j
+    // 求水头变化量离散傅里叶变换, 就右边界一条线
+    std::vector<std::complex<double>> dft_h(show_n());
+    // 按频率索引开始赋值
+    for(int k = 0; k < show_n(); k++){
+        if(k == 0){ // 初始条件为0
+            std::complex<double>Fh0(0, 0);
+            dft_h[k] = Fh0;
+        }
+        else{
+            std::complex<double>Fh(0, 0);
+            double wSy_real = k * (1 /(show_st() *show_n()))* Sy;
+            std::complex<double>wSy(wSy_real , 0);
+            double kw = k * (1 /(show_st() *show_n()));
+            std::complex<double>m = M(a, show_xl() / 2, kw, show_xl());
+            Fh = (((j * dft_wt[k]) / wSy) + dft_hlt[k])* m - ((j * dft_wt[k]) / wSy);
+            dft_h[k] = Fh;
+        }
+    }
+
     // 水头变化的傅里叶逆变换
     std::vector<double>h(show_n());
     for(int n = 0; n < show_n(); n++){
@@ -845,12 +1099,17 @@ Eigen::VectorXd Random_one_dimension_boussinesq::power_spectral_density(Eigen::M
 
 Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm(Eigen::MatrixXd solution, int l) // l代表位置
 {
-    Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(solution.col(l), show_n());// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
+    Eigen::VectorXd solution_h = solution.col(l);
+    Eigen::VectorXd Amplitude_h(show_n());
+    for(int i = 0; i < show_n(); i++){
+        Amplitude_h[i] = solution_h[i] - show_ic();
+    }
+    Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(Amplitude_h, show_n());// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
     Eigen::VectorXd Amplitude_w(show_n());
     double t = 0.0;
     // 离散化源汇项赋值
     for(int i = 0; i < show_n(); i++){
-        Amplitude_w[i] = source_sink_term(t);
+        Amplitude_w[i] = source_sink_term(t) - we;
         t += show_st();
     }
     Eigen::VectorXd Amplitude_w_fft = fast_fourier_transfrom(Amplitude_w, show_n());
@@ -862,16 +1121,47 @@ Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm(Eigen::M
     return Amplitude_fdm;
 }
 
+Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm_hl(Eigen::MatrixXd solution, int l) // l代表位置
+{
+    Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(solution.col(l), show_n());// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
+    Eigen::VectorXd Amplitude_hl(show_n());
+    double t = 0.0;
+    // 离散化左边界赋值
+    for(int i = 0; i < show_n(); i++){
+        Amplitude_hl[i] = list_h_l_cal(t) - h_l[1];
+        t += show_st();
+    }
+    Eigen::VectorXd Amplitude_hl_fft = fast_fourier_transfrom(Amplitude_hl, show_n());
+    Eigen::VectorXd Amplitude_fdm(show_n() / 2);
+    for(int j = 0; j < (show_n() / 2); j++){
+        Amplitude_fdm[j] = fabs(Amplitude_h_fft[j] / Amplitude_hl_fft[j]);
+    }
+    return Amplitude_fdm;
+}
+
 Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_analyze()
 {
     a_();
     Eigen::VectorXd Amplitude_analyze(show_n() / 2);
     double e = 0.0;
     for(int i = 0; i < (show_n() / 2); i++){
-        e = A(i * (1 / show_tl()));
+        e = A(i * (1 / show_tl()) * 6.28);
         Amplitude_analyze[i] = e;
     }
     Amplitude_analyze[0] = Amplitude_analyze[1]; // 把不存在的0的位置给替换掉
+    return Amplitude_analyze;
+}
+
+Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_analyze_hl()
+{
+    a_();
+    Eigen::VectorXd Amplitude_analyze(show_n() / 2); //取一半有效振幅
+    double e = 0.0;
+    for(int i = 0; i < (show_n() / 2); i++){
+        e = A_hl(i * (1 / show_tl()) * 6.28); // 1/tl = i*st/n=i*st/tl/st 此处角频率记得转化
+        Amplitude_analyze[i] = e;
+    }
+    Amplitude_analyze[0] = 1; // 在频率为0时，理论振幅比应该为1
     return Amplitude_analyze;
 }
 
@@ -904,14 +1194,46 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_zhuiganfa(Eigen::MatrixXd
 
 double Random_one_dimension_boussinesq::A(double w){
     //w = w;
-    double z_imag = w * show_xl() * show_xl() / a;
+
+    /*double z_imag = w * show_xl() * show_xl() / a;
     std::complex<double> z(0, z_imag);
     std::complex<double> sqrt_z = std::sqrt(z);
     // 计算双曲余弦的反函数
     std::complex<double> acosh_z = std::acosh(sqrt_z);
     double awl_real = a / (w * show_xl() * show_xl());
     std::complex<double> awl(awl_real, 0);
-    double result = (show_xl() * show_xl() / (a * Sy)) * abs(awl * acosh_z);
+    double result = (show_xl() * show_xl() / (a * Sy)) * abs(awl * acosh_z);*/
+
+
+    std::complex<double>j(0, 1); // 此式子代表虚数j
+    std::complex<double>one(1,0); // 代表实数1
+    std::complex<double>Fh(0, 0);
+    double wSy_real = w * Sy;
+    std::complex<double>wSy(wSy_real , 0);
+    std::complex<double>m = M(a, show_xl(), w, show_xl());
+    std::complex<double>Fjwsy = j / wSy;
+    Fh = Fjwsy * (m-one);
+    double result = fabs(Fh);
+    return result;
+}
+
+double Random_one_dimension_boussinesq::A_hl(double w){
+//    //w = w;
+//    double z_imag = w * show_xl() * show_xl() / a;
+//    std::complex<double> z(0, z_imag);
+//    std::complex<double> sqrt_z = std::sqrt(z);
+//    // 计算双曲余弦的反函数
+//    std::complex<double> acosh_z = std::acosh(sqrt_z);
+//    double awl_real = a / (w * show_xl() * show_xl());
+//    std::complex<double> awl(awl_real, 0);
+//    double result =  abs(awl * acosh_z);
+    double imag_r = w / a;
+    std::complex<double>r(0,  imag_r);
+    std::complex<double>r1 = sqrt(r) ;
+    std::complex<double>r2(-r1.real(), -r1.imag());
+    std::complex<double>r_(2, 0);
+    std::complex<double>z1 = r_ / (exp(r1 * show_xl()) + exp(r2 * show_xl()));
+    double result = abs(z1);
     return result;
 }
 

@@ -124,15 +124,20 @@ public:
 
     Eigen::MatrixXd solve(int how_to_solve); // 数值解求解计算
     std::complex<double> M(double a, double x, double w, double l); // 解析解中的函数M
-    Eigen::MatrixXd solve_an_wt(); // 源汇项l_随时间变化的解析解求解计算
+    Eigen::MatrixXd solve_an_wt(); // 源汇项随时间变化的解析解求解计算
     Eigen::MatrixXd solve_an_h_l_t(); // 左边界随时间变化的解析解求解计算
+    Eigen::MatrixXd solve_an_wt_h_l_t(); // 源汇项随时间变化与左边界随时间变化的解析解求解计算
+    Eigen::MatrixXd solve_an_wt_h_l_t_half(); // 源汇项随时间变化与左边界随时间变化的解析解求解计算(当X=L/2时)
     Eigen::VectorXd fast_fourier_transfrom(Eigen::MatrixXd solution, int n); // 快速傅里叶变换代码
     Eigen::VectorXd power_spectral_density(Eigen::MatrixXd solution, int n); // 功率谱密度变换代码
-    Eigen::VectorXd amplitude_complete_fdm(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解
-    Eigen::VectorXd amplitude_complete_analyze(); // 功率谱振幅比-解析解
+    Eigen::VectorXd amplitude_complete_fdm(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解(源汇项波动)
+    Eigen::VectorXd amplitude_complete_fdm_hl(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解(左边界波动)
+    Eigen::VectorXd amplitude_complete_analyze(); // 功率谱振幅比-解析解(源汇项波动)
+    Eigen::VectorXd amplitude_complete_analyze_hl();// 功率谱振幅比-解析解(左边界波动)
 
     Eigen::MatrixXd solve_zhuiganfa(Eigen::MatrixXd a,Eigen::MatrixXd b); // 追赶法算法
-    double A(double w); // 解析解，返回给定频率的功率谱振幅比值
+    double A(double w); // 解析解，返回给定频率的功率谱振幅比值(源汇项波动)
+    double A_hl(double w); // 解析解，返回给定频率的功率谱振幅比值(左边界波动)
 
     void set_angle(double a); // 设置底板倾斜角度
     void create_plate(); // 创建底板高程数组

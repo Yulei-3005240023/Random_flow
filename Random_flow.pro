@@ -20,6 +20,7 @@ SOURCES += \
     set_fdm.cpp \
     set_hydrogeological_parameter.cpp \
     set_new_wave.cpp \
+    set_new_wave_h.cpp \
     tchartview.cpp
 
 HEADERS += \
@@ -29,13 +30,16 @@ HEADERS += \
     set_fdm.h \
     set_hydrogeological_parameter.h \
     set_new_wave.h \
+    set_new_wave_h.h \
     tchartview.h
 
 FORMS += \
     random_flow_window.ui \
     set_fdm.ui \
     set_hydrogeological_parameter.ui \
-    set_new_wave.ui
+    set_new_wave.ui \
+    set_new_wave_h.ui
+
 
 TRANSLATIONS += \
     Random_flow_zh_CN.ts
