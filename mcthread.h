@@ -21,12 +21,14 @@ private:
     Random_one_dimension_boussinesq flow; // 实例化具象潜水一维随机流
     int times = 10; // 蒙特卡洛运算次数
     QMutex mutex; // 互斥量
+    bool use_preheat = false; // 是否启用预热期模式
 protected:
     void run(); // 线程的任务函数
 public:
     explicit MCThread_uniform_wt_amp(QObject *parent = nullptr);
     void set_flow(Random_one_dimension_boussinesq flow1);
     void set_times(int t); // 设置运算次数
+    void set_preheat(int u); // 设置是否使用预热期
 signals:
     void which_time(int time);
     void MC_amp_fdm(Eigen::VectorXd Matrix1);

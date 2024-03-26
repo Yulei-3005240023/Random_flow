@@ -125,7 +125,10 @@ public:
     Eigen::MatrixXd solve(int how_to_solve); // 数值解求解计算
     double solve_an_steady(double k_, double ha_, double x, double l); // 稳定流状态下的解析解
     double M_fenli(double x, double t, double a, double l, int times); // 分离变量法中的M
+    double M_fenli_1(double x, double t, double a, double l, int times); // 分离变量法中的M
     double solve_an_fenlibianliang(double x, double t, double l); // 分离变量法解析解
+    double solve_an_complex(double x, double t, double l); // 复变函数法解析解(边界周期波动)
+    double solve_an_complex_add(double x, double t, double l); // 稳定流-复变函数-分离变量-叠加原理法解析解(边界周期波动，入渗恒定)
     std::complex<double> M(double a, double x, double w, double l); // 解析解中的函数M
     Eigen::MatrixXd solve_an_wt(); // 源汇项随时间变化的解析解求解计算
     Eigen::MatrixXd solve_an_h_l_t(); // 左边界随时间变化的解析解求解计算
@@ -134,8 +137,10 @@ public:
     Eigen::VectorXd fast_fourier_transfrom(Eigen::MatrixXd solution, int n); // 快速傅里叶变换代码
     Eigen::VectorXd power_spectral_density(Eigen::MatrixXd solution, int n); // 功率谱密度变换代码
     Eigen::VectorXd amplitude_complete_fdm(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解(源汇项波动)
+    Eigen::VectorXd amplitude_complete_fdm_preheat(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解(源汇项波动)预热期砍掉
     Eigen::VectorXd amplitude_complete_fdm_hl(Eigen::MatrixXd solution, int l); // 功率谱振幅比值代码-数值解(左边界波动)
     Eigen::VectorXd amplitude_complete_analyze(); // 功率谱振幅比-解析解(源汇项波动)
+    Eigen::VectorXd amplitude_complete_analyze_preheat(); // 功率谱振幅比-解析解(源汇项波动)预热期砍掉
     Eigen::VectorXd amplitude_complete_analyze_hl();// 功率谱振幅比-解析解(左边界波动)
 
     Eigen::MatrixXd solve_zhuiganfa(Eigen::MatrixXd a,Eigen::MatrixXd b); // 追赶法算法

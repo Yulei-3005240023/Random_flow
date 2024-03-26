@@ -112,7 +112,7 @@ private slots:
 
     void on_spinBox_MC_un_wt_amp_valueChanged(int arg1);
 
-    void on_checkBox_use_MC_clicked();
+    void on_checkBox_use_MC_clicked();  // 是否启用蒙特卡洛数值模拟
 
     void on_doubleSpinBox_left_boundary_valueChanged(double arg1);
 
@@ -123,6 +123,8 @@ private slots:
     void on_actionsave_as_complete_triggered();
 
     void on_actionsave_as_hl_triggered();
+
+    void on_actionsave_as_fenli_triggered();
 
     void on_doubleSpinBox_right_boundary_valueChanged(double arg1);
 
@@ -148,9 +150,13 @@ private slots:
 
     void on_MC_un_hl_amp_start_clicked();  // 关于左边界随时间成均匀分布的蒙特卡洛线程启动函数
 
-
-
     void on_draw_fenli_clicked();
+
+    void on_checkBox_use_preheat_clicked(); // 是否启用预热期模式
+
+    void on_draw_as_complex_clicked();
+
+    void on_draw_as_complex_add_clicked();
 
 private:
     Ui::Random_flow_Window *ui;
@@ -192,6 +198,7 @@ private:
     MCThread_uniform_hl_amp *MCThread_uniform_hl_amp1; // 左边界随时间均匀分布的振幅的蒙特卡洛模拟线程1
     bool MCThread_uniform_hl_amp1_work = false; // 线程1是否工作
     bool use_MC_to_draw = false; // 是否使用蒙特卡洛的数据去绘图
+    bool use_preheat = false; // 是否启用预热期模式
     QMutex mutex; // 互斥量，用于确保线程之间不会冲突
 };
 #endif // RANDOM_FLOW_WINDOW_H

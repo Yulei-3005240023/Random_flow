@@ -99,7 +99,7 @@ Random_one_dimension_boussinesq::Random_one_dimension_boussinesq() : Random_flow
 {
     we = 0;
     we_x = 0;
-    Sy = 0.1;
+    Sy = 0.05;
     K = 10;
     a = -1; //设置-1为默认值方便后续程序判别
     a_as = -1;
@@ -384,7 +384,7 @@ double Random_one_dimension_boussinesq:: source_sink_term(double t)
     else
     {
         if(list_source_sink_term.size() == 0) return we; // 在不设随机波动以及，给定波动的情况下，输出源汇项期望值
-        double w_ = 0; //  w_ = we;
+        double w_ =  we;
         for (unsigned long long i = 0; i < list_source_sink_term.size(); i++) {
             if(list_source_sink_term[i][0] == 0){
                 w_ += list_source_sink_term[i][1] * std::sin(2 * 3.1514926 * (1 / list_source_sink_term[i][2]) * t);
@@ -607,11 +607,29 @@ double Random_one_dimension_boussinesq::solve_an_steady(double k_, double ha_, d
 
 double Random_one_dimension_boussinesq::M_fenli(double x, double t, double a, double l, int times){
     double m = 0.0;
-    double q = 0.0;
+    double e = we / Sy;
     for(int n = 1; n < times; n++){
-        q += 4 * sin((2 * n - 1) * 3.1415926 * x / (2 * l)) * exp(-1 * (2 * n - 1) * (2 * n - 1) * 9.8696044 * a * t / (4 * l * l)) / ((2 * n - 1) * 3.1415926);
+        double w = 0.0;
+        double An = 0.0;
+        w = (2 * n - 1) * 3.1415926 / (2 * l);
+        An = e * l / a / pow(w, 2) * pow(-1, n) - e / a / pow(w, 2) * (l * pow(-1, n) + 1 / w);
+        An = An * 2/l;
+        m += An * exp(-1 * (2 * n - 1) * (2 * n - 1) * 9.8696044 * a * t / (4 * l * l)) * sin(w * x);
     }
-    m = q;
+    return m;
+}
+
+double Random_one_dimension_boussinesq::M_fenli_1(double x, double t, double a, double l, int times){
+    double m = 0.0;
+    double e = we / Sy;
+    for(int n = 1; n < times; n++){
+        double w = 0.0;
+        double An = 0.0;
+        w = (2 * n - 1) * 3.1415926 / (2 * l);
+        An = -1 * e * l / a / pow(w, 2.0) * pow(-1, n - 1) + e/(2 * a) * (2 * l / pow(w, 2.0) * pow(-1, n - 1) - 2 / pow(w, 3.0)) ;
+        An = An * 2/l;  //1.6965191583730914
+        m += An * exp(-1 * pow(w, 2.0) * a * t) * sin(w * x);
+    }
     return m;
 }
 
@@ -622,9 +640,86 @@ double Random_one_dimension_boussinesq::solve_an_fenlibianliang(double x, double
     fs = (we / Sy) * l / a * x - 0.5 * (we / Sy) / a * x * x;
     // 非稳定流状态的解
     double fu = 0.0;
-    fu = -1 * fs * M_fenli(x, t, a, l, 1000);
+    fu = M_fenli_1(x, t, a, l, 1000);
     double h = 0.0;
     h = fu + fs + h_l[1];
+    return h;
+}
+
+double Random_one_dimension_boussinesq::solve_an_complex(double x, double t, double l){ // 复变函数法解析解(边界周期波动)
+    a_();
+    int T = list_h_l[0][2];
+    double w = 6.2831853 / T; // 在这里w代表cos(wt)中的w，代表角频率
+    double imag_r = w / a;
+    std::complex<double>r(0,  imag_r);
+    std::complex<double>r1 = sqrt(r) ;
+    std::complex<double>r2(-r1.real(), -r1.imag());
+    std::complex<double>iwt(0, w * t);
+
+    // 稳定后状态的解
+    std::complex<double>D(list_h_l[0][1], 0);  // 左边界期望值
+    std::complex<double>f8(0, 0);
+    f8 = D / (exp(r1 * l) - exp(r2 * l)) * (exp(r2 * (l - x)) + exp(r1 * (l - x))) * exp(iwt);
+//    double f_base = 1 - 2 * exp(-sqrt(2 * w /a) * l) * cos(sqrt(2 * w / a) * l);
+//    double sqrt_w_2a = sqrt(w / (2 * a));
+//    double f9 = list_h_l[0][1] * exp(-1 * sqrt_w_2a * x) / (f_base + exp(-sqrt(w / a) * l)) * (cos(w * t - sqrt_w_2a * x) - exp(-sqrt(2 * w / a) * l) * cos(w * t - sqrt_w_2a * (x + l)));
+//    double f10 = list_h_l[0][1] * exp(sqrt_w_2a * x) / (f_base + exp(sqrt(w / a) * l)) * (exp(sqrt(2 * w / a)  * l) * cos(w * t + sqrt_w_2a * (x - l)) - cos(w * t + sqrt_w_2a * x));
+//    double f11 = f9+f10;
+    // 预热期状态的解
+    std::complex<double>y(0, 0);
+    for(int n = 1; n < 1000; n++){
+        double w_ = 0.0;
+        std::complex<double> An = 0.0;
+        w_ = (2 * n - 1) * 3.1415926 / (2 * l);
+        std::complex<double> jifen_r1 = (pow(w_, -1) + r1 / pow(w_, 2) * exp(r1 * l) * pow(-1, n-1)) / (1.0 + pow(r1, 2) / pow(w_, 2));
+        std::complex<double> jifen_r2 = (pow(w_, -1) + r2 / pow(w_, 2) * exp(r2 * l) * pow(-1, n-1)) / (1.0 + pow(r2, 2) / pow(w_, 2));
+        An = exp(r2 * l) * jifen_r1 + exp(r1 * l) * jifen_r2;
+        An = An * 2.0 / l *  D / (exp(r1 * l) - exp(r2 * l))  * -1.0; /* exp(iwt);*/
+        y += An * exp(-1 * (2 * n - 1) * (2 * n - 1) * 9.8696044 * a * t / (4 * l * l)) * sin(w_ * x);
+    }
+    double h = 0.0;
+    h = f8.real() + y.real() + h_l[1];
+    return h;
+}
+
+double Random_one_dimension_boussinesq::solve_an_complex_add(double x, double t, double l){ // 复变函数法解析解(边界周期波动)
+    a_();
+    int T = list_h_l[0][2];
+    double w = 6.2831853 / T; // 在这里w代表cos(wt)中的w，代表角频率
+    double imag_r = w / a;
+    std::complex<double>r(0,  imag_r);
+    std::complex<double>r1 = sqrt(r) ;
+    std::complex<double>r2(-r1.real(), -r1.imag());
+    std::complex<double>iwt(0, w * t);
+
+    // 稳定后状态的解
+    std::complex<double>D(list_h_l[0][1], 0);  // 左边界期望值
+    std::complex<double>f8(0, 0);
+    f8 = D / (exp(r1 * l) - exp(r2 * l)) * (exp(r2 * (l - x)) + exp(r1 * (l - x))) * exp(iwt);
+    // 预热期状态的解
+    std::complex<double>y(0, 0);
+    for(int n = 1; n < 1000; n++){
+        double w_ = 0.0;
+        std::complex<double> An = 0.0;
+        double e = we / Sy;
+        double w1 = (2 * n - 1) * 3.1415926 / (2 * l);
+        double an_2 = -1 * e * l / a / pow(w1, 2.0) * pow(-1, n - 1) + e/(2 * a) * (2 * l / pow(w1, 2.0) * pow(-1, n - 1) - 2 / pow(w1, 3.0)) ;
+        an_2 = an_2 * 2 / l;
+        std::complex<double> An_2(an_2, 0);
+        w_ = (2 * n - 1) * 3.1415926 / (2 * l);
+        std::complex<double> jifen_r1 = (pow(w_, -1) + r1 / pow(w_, 2) * exp(r1 * l) * pow(-1, n-1)) / (1.0 + pow(r1, 2) / pow(w_, 2));
+        std::complex<double> jifen_r2 = (pow(w_, -1) + r2 / pow(w_, 2) * exp(r2 * l) * pow(-1, n-1)) / (1.0 + pow(r2, 2) / pow(w_, 2));
+        //An = 2.0 * r1 * pow(-1, n) / l /(pow(w_,2) + pow(r1, 2)) * D / (exp(r1 * l) - exp(r2 * l));
+        An = exp(r2 * l) * jifen_r1 + exp(r1 * l) * jifen_r2;
+        An = An * 2.0 / l *  D / (exp(r1 * l) - exp(r2 * l))  * -1.0; /* exp(iwt);*/
+        An = An_2 + An;
+        y += An * exp(-1 * (2 * n - 1) * (2 * n - 1) * 9.8696044 * a * t / (4 * l * l)) * sin(w_ * x);
+    }
+    // 稳定流状态的解
+    double fs = 0.0;
+    fs = (we / Sy) * l / a * x - 0.5 * (we / Sy) / a * x * x;
+    double h = 0.0;
+    h = fs + f8.real() + y.real() + h_l[1];
     return h;
 }
 
@@ -904,7 +999,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt_h_l_t()
     for(int k = 0; k < show_n(); k++){
         std::complex<double>Fw(0, 0);
         for (int n = 0; n < show_n(); n++) {
-            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+            int n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
             double imag = (-1 * 6.2831853 * k * n )/ n_;
             std::complex<double>eF(0, imag);
             std::complex<double>F_ = wt[n] * exp(eF);
@@ -929,12 +1024,33 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt_h_l_t()
             std::complex<double>wSy(wSy_real , 0);
             double kw = 6.2831853 * k * (1 /(show_st() *show_n()));
             std::complex<double>m = M(a, show_xl(), kw, show_xl());
-            Fh = (((j * dft_wt[k]) / wSy) + dft_hlt[k])* m - ((j * dft_wt[k]) / wSy);
+            Fh = ((j * dft_wt[k]) / wSy + dft_hlt[k])* m - (j * dft_wt[k]) / wSy;
             dft_h[k] = Fh;
         }
     }
 
     // 水头变化的傅里叶逆变换
+
+    std::vector<double>h_fftw(show_n());
+    // 输入和输出数组
+    fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
+    for(int k=0;k<show_n();k++){
+        in[k][0] = dft_h[k].real();
+        in[k][1] = dft_h[k].imag();
+    }
+    double* out = (double*) fftw_malloc(sizeof(double) * show_n());
+    // 创建逆变换计划
+    fftw_plan plan = fftw_plan_dft_c2r_1d(show_n(), in, out, FFTW_ESTIMATE);
+    // 执行逆变换
+    fftw_execute(plan);
+    for(int n = 0; n < show_n(); n++){
+        h_fftw[n] = out[n] / show_n();
+    }
+    // 释放资源
+    fftw_destroy_plan(plan);
+    fftw_free(in);
+    fftw_free(out);
+
     std::vector<double>h(show_n());
     for(int n = 0; n < show_n(); n++){
         std::complex<double> h_(0,0);
@@ -951,7 +1067,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt_h_l_t()
             H_ALL(n, (show_m() - 1)) = h[n] + solve_an_steady(K, show_ic(), show_xl(), show_xl());
         }
         else{
-            H_ALL(n, (show_m() - 1)) = h[n] + show_ic();
+            H_ALL(n, (show_m() - 1)) = h_fftw[n] + show_ic();
         }
     }
     return H_ALL;
@@ -1131,9 +1247,39 @@ Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm(Eigen::M
     return Amplitude_fdm;
 }
 
+Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm_preheat(Eigen::MatrixXd solution, int l) // l代表位置
+{
+    Eigen::VectorXd solution_h = solution.col(l);
+    Eigen::VectorXd Amplitude_h(show_n());
+    int n_ = floor(show_n() / 2); // 砍掉一半的n
+    for(int i = 0; i < n_; i++){
+        Amplitude_h[i] = solution_h[i + n_] - show_ic();
+    }
+    Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(Amplitude_h, n_);// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
+    Eigen::VectorXd Amplitude_w(show_n());
+    double t = n_ * show_st();
+    // 离散化源汇项赋值
+    for(int i = 0; i < n_; i++){
+        Amplitude_w[i] = source_sink_term(t) - we;
+        t += show_st();
+    }
+    Eigen::VectorXd Amplitude_w_fft = fast_fourier_transfrom(Amplitude_w, n_);
+    Eigen::VectorXd Amplitude_fdm(n_ / 2);
+    //std::cout<<"sbwycwds"<<std::endl;
+    for(int j = 0; j < (n_ / 2); j++){
+        Amplitude_fdm[j] = fabs(Amplitude_h_fft[j] / Amplitude_w_fft[j]);
+    }
+    return Amplitude_fdm;
+}
+
 Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm_hl(Eigen::MatrixXd solution, int l) // l代表位置
 {
-    Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(solution.col(l), show_n());// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
+    Eigen::VectorXd solution_h = solution.col(l);
+    Eigen::VectorXd Amplitude_h(show_n());
+    for(int i = 0; i < show_n(); i++){
+        Amplitude_h[i] = solution_h[i] - show_ic();
+    }
+    Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(Amplitude_h, show_n());// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
     Eigen::VectorXd Amplitude_hl(show_n());
     double t = 0.0;
     // 离散化左边界赋值
@@ -1156,6 +1302,20 @@ Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_analyze()
     double e = 0.0;
     for(int i = 0; i < (show_n() / 2); i++){
         e = A(i * (1 / show_tl()) * 6.2831853);
+        Amplitude_analyze[i] = e;
+    }
+    Amplitude_analyze[0] = Amplitude_analyze[1]; // 把不存在的0的位置给替换掉
+    return Amplitude_analyze;
+}
+
+Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_analyze_preheat()
+{
+    a_();
+    int n_ = floor(show_n() / 2); // 砍掉一半的n
+    Eigen::VectorXd Amplitude_analyze(n_ / 2);
+    double e = 0.0;
+    for(int i = 0; i < (n_ / 2); i++){
+        e = A(i * (2 / show_tl()) * 6.2831853);
         Amplitude_analyze[i] = e;
     }
     Amplitude_analyze[0] = Amplitude_analyze[1]; // 把不存在的0的位置给替换掉
@@ -1213,7 +1373,6 @@ double Random_one_dimension_boussinesq::A(double w){
     double awl_real = a / (w * show_xl() * show_xl());
     std::complex<double> awl(awl_real, 0);
     double result = (show_xl() * show_xl() / (a * Sy)) * abs(awl * acosh_z);*/
-
 
     std::complex<double>j(0, 1); // 此式子代表虚数j
     std::complex<double>one(1,0); // 代表实数1

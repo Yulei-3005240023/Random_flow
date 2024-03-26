@@ -16,9 +16,9 @@ Random_flow_Window::Random_flow_Window(QWidget *parent)
     ui->setupUi(this);
     step_length = 1;
     step_time = 1;
-    how_to_solve = 1;
+    how_to_solve = 3;
     hydraulic_conductivity = 10;
-    specific_yield = 0.1;
+    specific_yield = 0.05;
     chart_head = new QChart();
     series_head = new QLineSeries();
     series_plate = new QLineSeries();
@@ -265,6 +265,16 @@ void Random_flow_Window::save_the_data(QString filename, int model){
             astream<<str<<"\n";
         }
     }
+    else if(model == 5){ // 写入解析解数据(分离变量法)
+        double x = 0.0;
+        double h = 0.0;
+        for (int i = 0; i<flow.show_n(); i++) {
+            h = flow.solve_an_fenlibianliang(flow.show_xl(), x,flow.show_xl());
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
+            x += flow.show_st();
+        }
+    }
     afile.close();
 }
 
@@ -317,11 +327,15 @@ void Random_flow_Window::get_MC_amplitude_complete_fdm(Eigen::VectorXd vector1) 
     if(MC_act_time == 1) MC_amplitude_complete_fdm_1 = vector1;
     else
     {
-        for(int i = 0; i < (flow.show_n() / 2);i++)
-        {
-            MC_amplitude_complete_fdm_1[i] = (MC_amplitude_complete_fdm_1[i] * (MC_act_time - 1) + vector1[i]) / MC_act_time; // 取加权平均数，即为所以结果总共的平均数
-
+        int j = 0;
+        for(double h:vector1){
+            MC_amplitude_complete_fdm_1[j] = (MC_amplitude_complete_fdm_1[j] * (MC_act_time - 1) + h) / MC_act_time; // 取加权平均数，即为所以结果总共的平均数
+            j += 1;
         }
+//        for(int i = 0; i < (flow.show_n() / 2);i++)
+//        {
+//            MC_amplitude_complete_fdm_1[i] = (MC_amplitude_complete_fdm_1[i] * (MC_act_time - 1) + vector1[i]) / MC_act_time; // 取加权平均数，即为所以结果总共的平均数
+//        }
     }
     mutex.unlock();
 }
@@ -1115,18 +1129,47 @@ void Random_flow_Window::on_amplitude_complete_figure_clicked()
     int a = ui->spinBox_X->value();
     double x = 0.0;
     double w = 0.0;
-    Eigen::VectorXd amplitude_complete_fdm = flow.amplitude_complete_fdm(solve_fdm, a);
-    Eigen::VectorXd amplitude_complete_analyze = flow.amplitude_complete_analyze();
+    Eigen::VectorXd amplitude_complete_fdm;
+    Eigen::VectorXd amplitude_complete_analyze;
+    // 是否启用预热期
+    if(use_preheat){
+        amplitude_complete_fdm = flow.amplitude_complete_fdm_preheat(solve_fdm, a);
+        amplitude_complete_analyze = flow.amplitude_complete_analyze_preheat();
+        for (double A_analyze : amplitude_complete_analyze) {
+            series_analyze->append(w, A_analyze);
+            w += (2/ flow.show_tl());
+        }
+    }
+    else{
+        amplitude_complete_fdm = flow.amplitude_complete_fdm(solve_fdm, a);
+        amplitude_complete_analyze = flow.amplitude_complete_analyze();
+        for (double A_analyze : amplitude_complete_analyze) {
+            series_analyze->append(w, A_analyze);
+            w += (1/ flow.show_tl());
+        }
+    }
 
     // 找到最大振幅值，以便设置绘图坐标轴
     //double max_A = amplitude_complete_fdm.maxCoeff();
     double max_B = amplitude_complete_analyze.maxCoeff();
 
-    // 使用蒙特卡洛绘图
-    if (use_MC_to_draw){
+    // 使用蒙特卡洛绘图的条件判断
+    if (use_MC_to_draw && !use_preheat){
         for (double A_fdm : MC_amplitude_complete_fdm) {
             series_head->append(x,A_fdm);
             x += (1/ flow.show_tl());
+        }
+    }
+    else if(use_MC_to_draw && use_preheat){
+        for (double A_fdm : MC_amplitude_complete_fdm) {
+            series_head->append(x,A_fdm);
+            x += (2/ flow.show_tl());
+        }
+    }
+    else if(!use_MC_to_draw && use_preheat){
+        for (double A_fdm : amplitude_complete_fdm) {
+            series_head->append(x,A_fdm);
+            x += (2/ flow.show_tl());
         }
     }
     else{
@@ -1135,10 +1178,10 @@ void Random_flow_Window::on_amplitude_complete_figure_clicked()
             x += (1/ flow.show_tl());
         }
     }
-    for (double A_analyze : amplitude_complete_analyze) {
-        series_analyze->append(w, A_analyze);
-        w += (1/ flow.show_tl());
-    }
+//    for (double A_analyze : amplitude_complete_analyze) {
+//        series_analyze->append(w, A_analyze);
+//        w += (1/ flow.show_tl());
+//    }
 
     axis_x->setRange(0, 1 / (2*flow.show_st()));
     axis_x->setLabelFormat("%.2f"); // 标签格式
@@ -1321,6 +1364,16 @@ void Random_flow_Window::on_actionsave_as_hl_triggered()
     QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
     ui->textBrowser->append(aFileName);
     save_the_data(aFileName, 4);
+}
+
+void Random_flow_Window::on_actionsave_as_fenli_triggered()
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前解析解数据(分离变量法)";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 5);
 }
 
 void Random_flow_Window::on_doubleSpinBox_left_boundary_valueChanged(double arg1)
@@ -1675,7 +1728,7 @@ void Random_flow_Window::on_draw_fenli_clicked()
 {
     clear_chart_head();
 
-    QString title = "左边界随时间变化的分离变量法解析解图，绘图位置为右边界位置。";
+    QString title = "左边界，源汇项随时间恒定的分离变量法解析解图，绘图位置为右边界位置。";
     ui->graphicsView->setChart(chart_head);
     chart_head->setTitle(title);
     series_analyze->setName("水头曲线: 解析解");
@@ -1687,6 +1740,109 @@ void Random_flow_Window::on_draw_fenli_clicked()
     double h = 0.0;
     for (int i = 0; i<flow.show_n(); i++) {
         h = flow.solve_an_fenlibianliang(flow.show_xl(), x,flow.show_xl());
+        series_analyze->append(x, h);
+        x += flow.show_st();
+        if(h < min_h) min_h = h;
+        if(h > max_h) max_h = h;
+    }
+
+    axis_x->setRange(0, flow.show_tl());
+    axis_x->setLabelFormat("%.2f"); // 标签格式
+    axis_x->setTickCount(11);
+    axis_x->setMinorTickCount(1);
+    axis_x->setTitleText("时间轴(d)");
+
+    chart_head->addAxis(axis_x, Qt::AlignBottom);
+    series_analyze->attachAxis(axis_x);
+
+    axis_head->setRange(min_h, max_h);
+    axis_head->setLabelFormat("%.4f"); // 标签格式
+    axis_head->setTickCount(11);
+    axis_head->setMinorTickCount(1);
+    axis_head->setTitleText("水头(m)");
+
+    chart_head->addAxis(axis_head, Qt::AlignLeft);
+    series_analyze->attachAxis(axis_head);
+
+    // 更新图表
+    chart_head->addSeries(series_analyze);
+}
+
+void Random_flow_Window::on_checkBox_use_preheat_clicked()
+{
+    if(ui->checkBox_use_preheat->isChecked() == true) {
+        use_preheat = true;
+        MCThread_uniform_wt_amp1->set_preheat(1);
+    }
+    else {
+        use_preheat = false;
+        MCThread_uniform_wt_amp1->set_preheat(0);
+    }
+}
+
+
+void Random_flow_Window::on_draw_as_complex_clicked()
+{
+    clear_chart_head();
+
+    QString title = "左边界随时间变化的分离变量法解析解图，绘图位置为右边界位置。";
+    ui->graphicsView->setChart(chart_head);
+    chart_head->setTitle(title);
+    series_analyze->setName("水头曲线: 解析解");
+    series_analyze->setColor(QColorConstants::Red);
+
+    double x = 0.0;
+    double min_h = 800.0;
+    double max_h = 0.0;
+    double h = 0.0;
+    for (int i = 0; i<flow.show_n(); i++) {
+        h = flow.solve_an_complex(flow.show_xl(), x,flow.show_xl());
+        series_analyze->append(x, h);
+        x += flow.show_st();
+        if(h < min_h) min_h = h;
+        if(h > max_h) max_h = h;
+    }
+
+    axis_x->setRange(0, flow.show_tl());
+    axis_x->setLabelFormat("%.2f"); // 标签格式
+    axis_x->setTickCount(11);
+    axis_x->setMinorTickCount(1);
+    axis_x->setTitleText("时间轴(d)");
+
+    chart_head->addAxis(axis_x, Qt::AlignBottom);
+    series_analyze->attachAxis(axis_x);
+
+    axis_head->setRange(min_h, max_h);
+    axis_head->setLabelFormat("%.4f"); // 标签格式
+    axis_head->setTickCount(11);
+    axis_head->setMinorTickCount(1);
+    axis_head->setTitleText("水头(m)");
+
+    chart_head->addAxis(axis_head, Qt::AlignLeft);
+    series_analyze->attachAxis(axis_head);
+
+    // 更新图表
+    chart_head->addSeries(series_analyze);
+}
+
+
+void Random_flow_Window::on_draw_as_complex_add_clicked()
+{
+    clear_chart_head();
+
+    int a = ui->spinBox_X->value();
+    QString title = "左边界随时间变化，入渗强度恒定的分离变量(叠加原理)法解析解图""，绘图位置为第" + QString::number(ui->spinBox_X->value()) + "位置。";
+    ui->graphicsView->setChart(chart_head);
+    chart_head->setTitle(title);
+    series_analyze->setName("水头曲线: 解析解");
+    series_analyze->setColor(QColorConstants::Red);
+
+    double x = 0.0;
+    double min_h = 800.0;
+    double max_h = 0.0;
+    double h = 0.0;
+    for (int i = 0; i<flow.show_n(); i++) {
+        h = flow.solve_an_complex_add(a * flow.show_sl(), x, flow.show_xl());
         series_analyze->append(x, h);
         x += flow.show_st();
         if(h < min_h) min_h = h;

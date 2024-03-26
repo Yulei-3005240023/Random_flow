@@ -830,7 +830,7 @@
         <x>640</x>
         <y>0</y>
         <width>276</width>
-        <height>134</height>
+        <height>151</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -870,10 +870,17 @@
         <x>940</x>
         <y>0</y>
         <width>321</width>
-        <height>136</height>
+        <height>167</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_19">
+       <item>
+        <widget class="QCheckBox" name="checkBox_use_preheat">
+         <property name="text">
+          <string>预热模式启动</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QPushButton" name="MC_un_wt_amp_start">
          <property name="text">
@@ -918,18 +925,38 @@
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="draw_fenli">
+     <widget class="QWidget" name="verticalLayoutWidget_20">
       <property name="geometry">
        <rect>
-        <x>1270</x>
-        <y>10</y>
-        <width>121</width>
-        <height>28</height>
+        <x>1260</x>
+        <y>0</y>
+        <width>131</width>
+        <height>103</height>
        </rect>
       </property>
-      <property name="text">
-       <string>分离变量法绘图</string>
-      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_20">
+       <item>
+        <widget class="QPushButton" name="draw_fenli">
+         <property name="text">
+          <string>分离变量法绘图</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="draw_as_complex">
+         <property name="text">
+          <string>复变函数法绘图</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="draw_as_complex_add">
+         <property name="text">
+          <string>叠加法绘图</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_6">
@@ -1120,6 +1147,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="actionsave_as"/>
     <addaction name="actionsave_as_complete"/>
     <addaction name="actionsave_as_hl"/>
+    <addaction name="actionsave_as_fenli"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -1165,6 +1193,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="actionsave_as_hl">
    <property name="text">
     <string>保存当前解析解数据(左边界波动)</string>
+   </property>
+  </action>
+  <action name="actionsave_as_fenli">
+   <property name="text">
+    <string>保存当前解析解数据(分离变量法)</string>
    </property>
   </action>
  </widget>
