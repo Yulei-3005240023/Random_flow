@@ -4,9 +4,9 @@ QT += charts
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
-INCLUDEPATH += F:\Qt_project\eigen-3.4.0
-INCLUDEPATH += F:\Qt_project\fftw-3.3.5-dll64
-LIBS += -L"F:\Qt_project\fftw-3.3.5-dll64" -lfftw3-3
+INCLUDEPATH += D:\Qt_project\eigen-3.4.0
+INCLUDEPATH += D:\Qt_project\fftw-3.3.5-dll64
+LIBS += -L"D:\Qt_project\fftw-3.3.5-dll64" -lfftw3-3
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.

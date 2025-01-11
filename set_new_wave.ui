@@ -65,6 +65,9 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="doubleSpinBox_cycle">
+        <property name="decimals">
+         <number>4</number>
+        </property>
         <property name="maximum">
          <double>9999.989999999999782</double>
         </property>
@@ -86,6 +89,9 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="doubleSpinBox_amplitude">
+        <property name="decimals">
+         <number>4</number>
+        </property>
         <property name="maximum">
          <double>9999.989999999999782</double>
         </property>

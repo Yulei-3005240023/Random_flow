@@ -65,7 +65,7 @@ private:
     std::string name_chinese = "潜水含水层随机非稳定一维流";
     double angle; // 底板倾斜角度
     std::vector<double> plate; // 底板高程数组
-    std::vector<double> numberical_value_w; // 源汇项数值组
+    std::vector<double> numerical_value_w; // 源汇项数值组
 
     //QMutex mutex; // 互斥量，用于确保线程之间不会冲突
 
@@ -123,7 +123,7 @@ public:
     std::vector<std::vector<double>> share_list_h_r();
 
     Eigen::MatrixXd solve(int how_to_solve); // 数值解求解计算
-    double solve_an_steady(double k_, double ha_, double x, double l); // 稳定流状态下的解析解
+    double solve_an_steady(double k_, double x, double l); // 稳定流状态下的解析解
     double M_fenli(double x, double t, double a, double l, int times); // 分离变量法中的M
     double M_fenli_1(double x, double t, double a, double l, int times); // 分离变量法中的M
     double solve_an_fenlibianliang(double x, double t, double l); // 分离变量法解析解

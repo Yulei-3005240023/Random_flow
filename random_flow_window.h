@@ -126,6 +126,12 @@ private slots:
 
     void on_actionsave_as_fenli_triggered();
 
+    void on_actionsave_as_comlep_add_triggered();
+
+    void on_actionsave_MC_hl_triggered();
+
+    void on_actionsave_as_hl_complete_triggered();
+
     void on_doubleSpinBox_right_boundary_valueChanged(double arg1);
 
     void on_random_new_wave_h_l_clicked();
@@ -144,7 +150,7 @@ private slots:
 
     void on_delete_wave_h_r_clicked();
 
-    void on_use_white_noise_checkBox_h_l_clicked();
+    void on_use_white_noise_checkBox_h_l_clicked();  
 
     void on_time_field_figure_h_l_clicked();
 
@@ -157,6 +163,8 @@ private slots:
     void on_draw_as_complex_clicked();
 
     void on_draw_as_complex_add_clicked();
+
+
 
 private:
     Ui::Random_flow_Window *ui;

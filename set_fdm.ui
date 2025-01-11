@@ -40,7 +40,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox_step_length"/>
+       <widget class="QDoubleSpinBox" name="SpinBox_step_length"/>
       </item>
      </layout>
     </item>
@@ -54,7 +54,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox_step_time"/>
+       <widget class="QDoubleSpinBox" name="SpinBox_step_time"/>
       </item>
      </layout>
     </item>

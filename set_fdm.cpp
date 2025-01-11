@@ -20,23 +20,23 @@ Set_FDM::~Set_FDM()
 void Set_FDM::set_window(double sl_, double st_, int solve_method_)
 {
     sl = sl_;
-    ui->spinBox_step_length->setValue(sl);
+    ui->SpinBox_step_length->setValue(sl);
     st = st_;
-    ui->spinBox_step_time->setValue(st);
+    ui->SpinBox_step_time->setValue(st);
     solve_method = solve_method_;
     if(solve_method == 1) ui->LU->click();
     else if(solve_method == 2) ui->QR->click();
     else if(solve_method == 3) ui->Cholesky->click();
 }
 
-int Set_FDM::step_length()
+double Set_FDM::step_length()
 {
-    return ui->spinBox_step_length->value();
+    return ui->SpinBox_step_length->value();
 }
 
-int Set_FDM::step_time()
+double Set_FDM::step_time()
 {
-    return ui->spinBox_step_time->value();
+    return ui->SpinBox_step_time->value();
 }
 
 int Set_FDM::solve()

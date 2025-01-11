@@ -259,20 +259,54 @@ void Random_flow_Window::save_the_data(QString filename, int model){
         }
     }
     else if(model == 4){ // 写入解析解数据(左边界波动)
-        Eigen::MatrixXd solve_as1 = flow.solve_an_h_l_t();
-        for(double h:solve_as1.col(flow.show_m() - 1)){
+//        Eigen::MatrixXd solve_as1 = flow.solve_an_h_l_t();
+//        for(double h:solve_as1.col(flow.show_m() - 1)){
+//            QString str = QString::number(h, 'f', 8);
+//            astream<<str<<"\n";
+//        }
+        double x = 0.0;
+        double h = 0.0;
+        int a = ui->spinBox_X->value();
+        for (int i = 0; i<flow.show_n(); i++) {
+            h = flow.solve_an_complex(a * flow.show_sl(), x, flow.show_xl());
             QString str = QString::number(h, 'f', 8);
             astream<<str<<"\n";
+            x += flow.show_st();
         }
     }
     else if(model == 5){ // 写入解析解数据(分离变量法)
         double x = 0.0;
         double h = 0.0;
+        int a = ui->spinBox_X->value();
         for (int i = 0; i<flow.show_n(); i++) {
-            h = flow.solve_an_fenlibianliang(flow.show_xl(), x,flow.show_xl());
+            h = flow.solve_an_fenlibianliang(a * flow.show_sl(), x, flow.show_xl());
             QString str = QString::number(h, 'f', 8);
             astream<<str<<"\n";
             x += flow.show_st();
+        }
+    }
+    else if(model == 6){ // 写入解析解数据(叠加状态)
+        double x = 0.0;
+        double h = 0.0;
+        int a = ui->spinBox_X->value();
+        for (int i = 0; i<flow.show_n(); i++) {
+            h = flow.solve_an_complex_add(a * flow.show_sl(), x, flow.show_xl());
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
+            x += flow.show_st();
+        }
+    }
+    else if(model == 7){ // 写入左边界蒙特卡洛振幅比
+        for(double h:MC_amplitude_complete_hl_fdm){
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
+        }
+    }
+    else if(model == 8){ // 写入左边界振幅比解析解数据
+        Eigen::VectorXd amplitude_complete_analyze_hl = flow.amplitude_complete_analyze_hl();
+        for(double h:amplitude_complete_analyze_hl){
+            QString str = QString::number(h, 'f', 8);
+            astream<<str<<"\n";
         }
     }
     afile.close();
@@ -1211,6 +1245,7 @@ void Random_flow_Window::on_MC_un_wt_amp_start_clicked() // 关于源汇项随�
     //MC_amplitude_complete_fdm.setZero();
     MCThread_uniform_wt_amp1->set_flow(flow);
     MCThread_uniform_wt_amp1->set_times(MC_times);
+    MCThread_uniform_wt_amp1->set_loc(ui->spinBox_X->value());
     MCThread_uniform_wt_amp1->start();
     MCThread_uniform_wt_amp1_work = true;
 
@@ -1232,13 +1267,9 @@ void Random_flow_Window::on_MC_un_hl_amp_start_clicked()  // 关于左边界随�
     //MC_amplitude_complete_fdm.setZero();
     MCThread_uniform_hl_amp1->set_flow(flow);
     MCThread_uniform_hl_amp1->set_times(MC_times);
+    MCThread_uniform_hl_amp1->set_loc(ui->spinBox_X->value());
     MCThread_uniform_hl_amp1->start();
     MCThread_uniform_hl_amp1_work = true;
-
-    //    MCThread_uniform_wt_amp2->set_flow(flow);
-    //    MCThread_uniform_wt_amp2->set_times(floor(MC_times/2));
-    //    MCThread_uniform_wt_amp2->start();
-    //    MCThread_uniform_wt_amp2_work = true;
 
     ui->MC_un_wt_amp_start->setEnabled(false);
     ui->MC_un_hl_amp_start->setEnabled(false);
@@ -1376,6 +1407,36 @@ void Random_flow_Window::on_actionsave_as_fenli_triggered()
     save_the_data(aFileName, 5);
 }
 
+void Random_flow_Window::on_actionsave_as_comlep_add_triggered()
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前解析解数据(叠加状态)";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 6);
+}
+
+void Random_flow_Window::on_actionsave_MC_hl_triggered()
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前左边界蒙特卡洛振幅比";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 7);
+}
+
+void Random_flow_Window::on_actionsave_as_hl_complete_triggered()
+{
+    QString curPath = QDir::currentPath();  // 获取应用程序当前目录
+    QString dlgTitle = "保存当前左边界振幅比解析解";
+    QString filter = "文本文件(*.txt)";
+    QString aFileName = QFileDialog::getSaveFileName(this, dlgTitle, curPath, filter);
+    ui->textBrowser->append(aFileName);
+    save_the_data(aFileName, 8);
+}
+
 void Random_flow_Window::on_doubleSpinBox_left_boundary_valueChanged(double arg1)
 {
     if(ui->comboBox_left_boundary->currentText() == "一类边界(给定水头)"){
@@ -1500,7 +1561,6 @@ void Random_flow_Window::on_draw_solve_line_as_hl_clicked()
     QString title = "左边界随时间变化的解析解图，绘图位置为右边界位置。";
     ui->graphicsView->setChart(chart_head);
     chart_head->setTitle(title);
-    //series_head->setName("水头曲线: 数值解");
     series_analyze->setName("水头曲线: 解析解");
     series_analyze->setColor(QColorConstants::Red);
     //std::vector<double>solve_fdm_l(flow.show_n());
@@ -1785,7 +1845,8 @@ void Random_flow_Window::on_draw_as_complex_clicked()
 {
     clear_chart_head();
 
-    QString title = "左边界随时间变化的分离变量法解析解图，绘图位置为右边界位置。";
+    int a = ui->spinBox_X->value();
+    QString title = "左边界随时间变化的复变函数法解析解图，绘图位置为右边界位置。";
     ui->graphicsView->setChart(chart_head);
     chart_head->setTitle(title);
     series_analyze->setName("水头曲线: 解析解");
@@ -1796,7 +1857,7 @@ void Random_flow_Window::on_draw_as_complex_clicked()
     double max_h = 0.0;
     double h = 0.0;
     for (int i = 0; i<flow.show_n(); i++) {
-        h = flow.solve_an_complex(flow.show_xl(), x,flow.show_xl());
+        h = flow.solve_an_complex(a * flow.show_sl(), x,flow.show_xl());
         series_analyze->append(x, h);
         x += flow.show_st();
         if(h < min_h) min_h = h;
@@ -1824,7 +1885,6 @@ void Random_flow_Window::on_draw_as_complex_clicked()
     // 更新图表
     chart_head->addSeries(series_analyze);
 }
-
 
 void Random_flow_Window::on_draw_as_complex_add_clicked()
 {
@@ -1870,4 +1930,3 @@ void Random_flow_Window::on_draw_as_complex_add_clicked()
     // 更新图表
     chart_head->addSeries(series_analyze);
 }
-

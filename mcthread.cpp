@@ -22,7 +22,7 @@ void MCThread_uniform_wt_amp::run()
             time += 1;
             mutex.lock();
             Eigen::MatrixXd solve_fdm = flow.solve(3);
-            Eigen::VectorXd Amplitude_fdm = flow.amplitude_complete_fdm_preheat(solve_fdm, (flow.show_m()-1));
+            Eigen::VectorXd Amplitude_fdm = flow.amplitude_complete_fdm_preheat(solve_fdm, loc);
             mutex.unlock();
             emit which_time(time); // 向主进程发送信号，表示进行到第几次模拟
             //msleep(10);
@@ -36,7 +36,7 @@ void MCThread_uniform_wt_amp::run()
             time += 1;
             mutex.lock();
             Eigen::MatrixXd solve_fdm = flow.solve(3);
-            Eigen::VectorXd Amplitude_fdm = flow.amplitude_complete_fdm(solve_fdm, (flow.show_m()-1));
+            Eigen::VectorXd Amplitude_fdm = flow.amplitude_complete_fdm(solve_fdm, loc);
             mutex.unlock();
             emit which_time(time); // 向主进程发送信号，表示进行到第几次模拟
             //msleep(10);
@@ -66,6 +66,11 @@ void MCThread_uniform_wt_amp::set_preheat(int u)
     }
 }
 
+void MCThread_uniform_wt_amp::set_loc(int l)
+{
+    loc = l;
+}
+
 MCThread_uniform_hl_amp::MCThread_uniform_hl_amp(QObject *parent)
     :  MCThread{parent}
 {
@@ -81,7 +86,7 @@ void MCThread_uniform_hl_amp::run()
         time += 1;
         mutex.lock();
         Eigen::MatrixXd solve_fdm = flow.solve(3);
-        Eigen::VectorXd Amplitude_fdm = flow.amplitude_complete_fdm_hl(solve_fdm, (flow.show_m()-1));
+        Eigen::VectorXd Amplitude_fdm = flow.amplitude_complete_fdm_hl(solve_fdm, loc);
         mutex.unlock();
         emit which_time(time); // 向主进程发送信号，表示进行到第几次模拟
         //msleep(10);
@@ -98,4 +103,9 @@ void MCThread_uniform_hl_amp::set_flow(Random_one_dimension_boussinesq flow1)
 void MCThread_uniform_hl_amp::set_times(int t)
 {
     times = t;
+}
+
+void MCThread_uniform_hl_amp::set_loc(int l)
+{
+    loc = l;
 }

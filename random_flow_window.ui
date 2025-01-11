@@ -42,7 +42,7 @@
      <bool>false</bool>
     </property>
     <property name="currentIndex">
-     <number>5</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -91,6 +91,9 @@
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="doubleSpinBox_left_boundary">
+         <property name="decimals">
+          <number>4</number>
+         </property>
          <property name="maximum">
           <double>9999.989999999999782</double>
          </property>
@@ -138,6 +141,9 @@
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="doubleSpinBox_right_boundary">
+         <property name="decimals">
+          <number>4</number>
+         </property>
          <property name="maximum">
           <double>9999.989999999999782</double>
          </property>
@@ -204,6 +210,9 @@
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="doubleSpinBox_ic">
+         <property name="decimals">
+          <number>4</number>
+         </property>
          <property name="maximum">
           <double>9999.989999999999782</double>
          </property>
@@ -827,9 +836,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_18">
       <property name="geometry">
        <rect>
-        <x>640</x>
+        <x>620</x>
         <y>0</y>
-        <width>276</width>
+        <width>281</width>
         <height>151</height>
        </rect>
       </property>
@@ -867,7 +876,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_19">
       <property name="geometry">
        <rect>
-        <x>940</x>
+        <x>910</x>
         <y>0</y>
         <width>321</width>
         <height>167</height>
@@ -928,9 +937,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_20">
       <property name="geometry">
        <rect>
-        <x>1260</x>
+        <x>1240</x>
         <y>0</y>
-        <width>131</width>
+        <width>151</width>
         <height>103</height>
        </rect>
       </property>
@@ -1135,7 +1144,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <x>0</x>
      <y>0</y>
      <width>1422</width>
-     <height>26</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -1148,6 +1157,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="actionsave_as_complete"/>
     <addaction name="actionsave_as_hl"/>
     <addaction name="actionsave_as_fenli"/>
+    <addaction name="actionsave_as_comlep_add"/>
+    <addaction name="actionsave_MC_hl"/>
+    <addaction name="actionsave_as_hl_complete"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -1198,6 +1210,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="actionsave_as_fenli">
    <property name="text">
     <string>保存当前解析解数据(分离变量法)</string>
+   </property>
+  </action>
+  <action name="actionsave_as_comlep_add">
+   <property name="text">
+    <string>保存当前叠加状态解析解数据</string>
+   </property>
+  </action>
+  <action name="actionsave_MC_hl">
+   <property name="text">
+    <string>保存当前左边界蒙特卡洛振幅比</string>
+   </property>
+  </action>
+  <action name="actionsave_as_hl_complete">
+   <property name="text">
+    <string>保存当前左边界振幅比解析解</string>
    </property>
   </action>
  </widget>

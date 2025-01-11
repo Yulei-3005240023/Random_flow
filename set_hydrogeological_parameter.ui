@@ -35,6 +35,9 @@
     </item>
     <item>
      <widget class="QDoubleSpinBox" name="doubleSpinBox_specific_yield">
+      <property name="decimals">
+       <number>4</number>
+      </property>
       <property name="value">
        <double>0.050000000000000</double>
       </property>
@@ -64,6 +67,9 @@
     </item>
     <item>
      <widget class="QDoubleSpinBox" name="doubleSpinBox_hydraulic_conductivity">
+      <property name="decimals">
+       <number>5</number>
+      </property>
       <property name="maximum">
        <double>9999.989999999999782</double>
       </property>

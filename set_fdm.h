@@ -14,8 +14,8 @@ class Set_FDM : public QDialog
 public:
     explicit Set_FDM(QWidget *parent = nullptr);
     ~Set_FDM();
-    int step_length();
-    int step_time();
+    double step_length();
+    double step_time();
     int solve();
     void how_to_solve();
     void set_window(double sl_, double st_, int solve_method_);

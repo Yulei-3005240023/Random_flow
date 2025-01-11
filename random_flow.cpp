@@ -113,13 +113,11 @@ Random_one_dimension_boussinesq::Random_one_dimension_boussinesq() : Random_flow
 
     use_white_noise_time = false;
     use_white_noise_length = false;
-    //seed = 0;
-    //rand = new QRandomGenerator(seed);
 }
 
 Random_one_dimension_boussinesq::~Random_one_dimension_boussinesq()
 {
-    //delete rand;
+
 }
 
 void Random_one_dimension_boussinesq::a_()
@@ -379,7 +377,7 @@ double Random_one_dimension_boussinesq:: source_sink_term(double t)
 {
     if(use_white_noise_time == true)
     {
-        return numberical_value_w[t/show_st()];
+        return numerical_value_w[t/show_st()];
     }
     else
     {
@@ -599,9 +597,10 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve(int how_to_solve)
     return H_ALL;
 }
 
-double Random_one_dimension_boussinesq::solve_an_steady(double k_, double ha_, double x, double l){
+double Random_one_dimension_boussinesq::solve_an_steady(double k_, double x, double l){
     double h = 0.0;
-    h = h_l[1] + x * we * l /(k_ * ha_) - 0.5 * x * x * we /(k_ * ha_);
+    h = h_l[1] * h_l[1] * + 2 * x * we * l /k_ - x * x * we / k_ ;
+    h =sqrt(h);
     return h;
 }
 
@@ -646,7 +645,7 @@ double Random_one_dimension_boussinesq::solve_an_fenlibianliang(double x, double
     return h;
 }
 
-double Random_one_dimension_boussinesq::solve_an_complex(double x, double t, double l){ // 复变函数法解析解(边界周期波动)
+double Random_one_dimension_boussinesq::solve_an_complex(double x, double t, double l){ // 复变函数法解析解(纯边界周期波动)
     a_();
     int T = list_h_l[0][2];
     double w = 6.2831853 / T; // 在这里w代表cos(wt)中的w，代表角频率
@@ -660,25 +659,38 @@ double Random_one_dimension_boussinesq::solve_an_complex(double x, double t, dou
     std::complex<double>D(list_h_l[0][1], 0);  // 左边界期望值
     std::complex<double>f8(0, 0);
     f8 = D / (exp(r1 * l) - exp(r2 * l)) * (exp(r2 * (l - x)) + exp(r1 * (l - x))) * exp(iwt);
-//    double f_base = 1 - 2 * exp(-sqrt(2 * w /a) * l) * cos(sqrt(2 * w / a) * l);
-//    double sqrt_w_2a = sqrt(w / (2 * a));
-//    double f9 = list_h_l[0][1] * exp(-1 * sqrt_w_2a * x) / (f_base + exp(-sqrt(w / a) * l)) * (cos(w * t - sqrt_w_2a * x) - exp(-sqrt(2 * w / a) * l) * cos(w * t - sqrt_w_2a * (x + l)));
-//    double f10 = list_h_l[0][1] * exp(sqrt_w_2a * x) / (f_base + exp(sqrt(w / a) * l)) * (exp(sqrt(2 * w / a)  * l) * cos(w * t + sqrt_w_2a * (x - l)) - cos(w * t + sqrt_w_2a * x));
-//    double f11 = f9+f10;
+
+    double f_base0 = 1 - 2 * exp(-sqrt(2 * w /a) * l) * cos(sqrt(2 * w / a) * l);
+    double f_base1 = 1 - 2 * exp(sqrt(2 * w /a) * l) * cos(sqrt(2 * w / a) * l);
+    double sqrt_w_2a = sqrt(w / (2 * a));
+    double sqrt_2w_a = sqrt(2 * w / a);
+    double f9 = list_h_l[0][1] * exp(-1 * sqrt_w_2a * x) / (f_base0 + exp(-2 * sqrt_2w_a * l)) * (cos(w * t - sqrt_w_2a * x) - exp(-sqrt_2w_a * l) * cos(w * t - sqrt_w_2a * x - sqrt_2w_a * l));
+    double f10 = list_h_l[0][1] * exp(sqrt_w_2a * x) / (f_base1 + exp(2 * sqrt_2w_a * l)) * (exp(sqrt_2w_a  * l) * cos(w * t + sqrt_w_2a * x - sqrt_2w_a * l) - cos(w * t + sqrt_w_2a * x));
+    double f11;
+    double f9_ = list_h_l[0][1] * exp(-1 * sqrt_w_2a * x) / (f_base0 + exp(-2 * sqrt_2w_a * l)) * (sin(w * t - sqrt_w_2a * x) - exp(-sqrt_2w_a * l) * sin(w * t - sqrt_w_2a * x - sqrt_2w_a * l));
+    double f10_ = list_h_l[0][1] * exp(sqrt_w_2a * x) / (f_base1 + exp(2 * sqrt_2w_a * l)) * (exp(sqrt_2w_a  * l) * sin(w * t + sqrt_w_2a * x - sqrt_2w_a * l) -sin(w * t + sqrt_w_2a * x));
+    if(list_h_l[0][0] == 0){  // 判定为sin
+        f11 = f9_+f10_; //f8.imag();//
+    }
+    else if(list_h_l[0][0] == 1){  // 判定为cos
+       f11 = f9+f10; //f8.real();//
+    }
     // 预热期状态的解
     std::complex<double>y(0, 0);
     for(int n = 1; n < 1000; n++){
         double w_ = 0.0;
         std::complex<double> An = 0.0;
         w_ = (2 * n - 1) * 3.1415926 / (2 * l);
-        std::complex<double> jifen_r1 = (pow(w_, -1) + r1 / pow(w_, 2) * exp(r1 * l) * pow(-1, n-1)) / (1.0 + pow(r1, 2) / pow(w_, 2));
+        std::complex<double> jifen_r1 = (pow(w_, -1) + r1 / pow(w_, 2) * exp
+                                                           (r1 * l) * pow(-1, n-1)) / (1.0 + pow(r1, 2) / pow(w_, 2));
         std::complex<double> jifen_r2 = (pow(w_, -1) + r2 / pow(w_, 2) * exp(r2 * l) * pow(-1, n-1)) / (1.0 + pow(r2, 2) / pow(w_, 2));
         An = exp(r2 * l) * jifen_r1 + exp(r1 * l) * jifen_r2;
         An = An * 2.0 / l *  D / (exp(r1 * l) - exp(r2 * l))  * -1.0; /* exp(iwt);*/
         y += An * exp(-1 * (2 * n - 1) * (2 * n - 1) * 9.8696044 * a * t / (4 * l * l)) * sin(w_ * x);
     }
     double h = 0.0;
-    h = f8.real() + y.real() + h_l[1];
+    h = f11 ;//+ h_l[1];
+    //h = f8.real() + y.real() + h_l[1];
     return h;
 }
 
@@ -720,6 +732,12 @@ double Random_one_dimension_boussinesq::solve_an_complex_add(double x, double t,
     fs = (we / Sy) * l / a * x - 0.5 * (we / Sy) / a * x * x;
     double h = 0.0;
     h = fs + f8.real() + y.real() + h_l[1];
+    if(list_h_l[0][0] == 0){  // 判定为sin
+            h = fs + f8.imag() + y.imag() + h_l[1];//f9_+f10_;
+    }
+    else if(list_h_l[0][0] == 1){  // 判定为cos
+        h = fs + f8.real() + y.real() + h_l[1];//f9+f10;
+    }
     return h;
 }
 
@@ -796,60 +814,57 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt() // 解析解求�
     std::vector<std::complex<double>> dft_h(show_n());
     // 按频率索引开始赋值
     for(int k = 0; k < show_n(); k++){
-        if(k == 0){ // 初始条件为0
+        if(k == 0){ // 初始条件无法限定！！！！！
             std::complex<double>Fh0(0, 0);
             dft_h[k] = Fh0;
         }
         else{
             std::complex<double>Fh(0, 0);
-            double wSy_real = k / (show_st() *show_n())* Sy;
+            double wSy_real = 6.2831853 * k / (show_st() *show_n())* Sy;
             std::complex<double>wSy(wSy_real , 0);
-            double kw = k / (show_st() * show_n());
+            double kw = 6.2831853 * k / (show_st() * show_n());
             std::complex<double>m = M(a, show_xl(), kw, show_xl());
-            Fh = ((j * dft_wt[k]) / wSy) * m - ((j * dft_wt[k]) / wSy);
+            Fh = ((j * dft_wt_fftw[k]) / wSy) * m - ((j * dft_wt_fftw[k]) / wSy);
             dft_h[k] = Fh;
         }
     }
 
     // 水头变化的傅里叶逆变换
-    std::vector<double>h(show_n());
+//    std::vector<double>h(show_n());
 
-//    std::vector<double>h_fftw(show_n());
-//    // 输入和输出数组
-//    fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
-//    for(int k=0;k<show_n();k++){
-//        in[k][0] = dft_h[k].real();
-//        in[k][1] = dft_h[k].imag();
-//    }
-//    double* out = (double*) fftw_malloc(sizeof(double) * show_n());
-//    // 创建逆变换计划
-//    fftw_plan plan = fftw_plan_dft_c2r_1d(show_n(), in, out, FFTW_ESTIMATE);
-//    // 执行逆变换
-//    fftw_execute(plan);
-//    for(int n = 0; n < show_n(); n++){
-//        h_fftw[n] = out[n] / show_n();
-//    }
-//    // 释放资源
-//    fftw_destroy_plan(plan);
-//    fftw_free(in);
-//    fftw_free(out);
-
-    for(int n = 0; n < show_n(); n++){
-        std::complex<double> h_(0,0);
-        for (int k = 0; k < show_n(); k++) {
-            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
-            double imag = (k * n)/ n_;
-            std::complex<double>eh(0, imag);
-            h_ = h_ + dft_h[k] * exp(eh);
-        }
-        h[n] = h_.real()* (1/(show_st() *show_n())) / 3.1415926;
+    std::vector<double>h_fftw(show_n());
+    // 输入和输出数组
+    fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * show_n());
+    for(int k=0;k<show_n();k++){
+        in[k][0] = dft_h[k].real();
+        in[k][1] = dft_h[k].imag();
     }
+    double* out = (double*) fftw_malloc(sizeof(double) * show_n());
+    // 创建逆变换计划
+    fftw_plan plan = fftw_plan_dft_c2r_1d(show_n(), in, out, FFTW_ESTIMATE);
+    // 执行逆变换
+    fftw_execute(plan);
+    for(int n = 0; n < show_n(); n++){
+        h_fftw[n] = out[n] / show_n();
+    }
+    // 释放资源
+    fftw_destroy_plan(plan);
+    fftw_free(in);
+    fftw_free(out);
 
-    // 误差补偿
-    double h_wucha = 0 - h[0];
+//    for(int n = 0; n < show_n(); n++){
+//        std::complex<double> h_(0,0);
+//        for (int k = 0; k < show_n(); k++) {
+//            double n_ = show_n(); // 我也不知道为啥非得先这样。。。。。。
+//            double imag = (k * n)/ n_;
+//            std::complex<double>eh(0, imag);
+//            h_ = h_ + dft_h[k] * exp(eh);
+//        }
+//        h[n] = h_.real()* (1/(show_st() *show_n())) / 3.1415926;
+//    }
 
     for(int n = 0; n < show_n(); n++){
-        H_ALL(n, (show_m() - 1)) = h[n] + show_ic() + h_wucha;
+        H_ALL(n, (show_m() - 1)) = h_fftw[n] + show_ic();
     }
     return H_ALL;
 }
@@ -1064,7 +1079,7 @@ Eigen::MatrixXd Random_one_dimension_boussinesq::solve_an_wt_h_l_t()
     }
     for(int n = 0; n < show_n(); n++){
         if(use_white_noise_time == false && list_source_sink_term.size() == 0){
-            H_ALL(n, (show_m() - 1)) = h[n] + solve_an_steady(K, show_ic(), show_xl(), show_xl());
+            H_ALL(n, (show_m() - 1)) = h[n] + solve_an_steady(K, show_xl(), show_xl());
         }
         else{
             H_ALL(n, (show_m() - 1)) = h_fftw[n] + show_ic();
@@ -1228,7 +1243,7 @@ Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm(Eigen::M
     Eigen::VectorXd solution_h = solution.col(l);
     Eigen::VectorXd Amplitude_h(show_n());
     for(int i = 0; i < show_n(); i++){
-        Amplitude_h[i] = solution_h[i] - show_ic();
+        Amplitude_h[i] = solution_h[i] - solve_an_steady(K, l * show_sl(), show_xl());
     }
     Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(Amplitude_h, show_n());// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
     Eigen::VectorXd Amplitude_w(show_n());
@@ -1253,7 +1268,7 @@ Eigen::VectorXd Random_one_dimension_boussinesq::amplitude_complete_fdm_preheat(
     Eigen::VectorXd Amplitude_h(show_n());
     int n_ = floor(show_n() / 2); // 砍掉一半的n
     for(int i = 0; i < n_; i++){
-        Amplitude_h[i] = solution_h[i + n_] - show_ic();
+        Amplitude_h[i] = solution_h[i + n_] - solve_an_steady(K, l * show_sl(), show_xl());
     }
     Eigen::VectorXd Amplitude_h_fft = fast_fourier_transfrom(Amplitude_h, n_);// flow.fast_fourier_transfrom(solve_fdm.col(a), flow.show_n())
     Eigen::VectorXd Amplitude_w(show_n());
@@ -1433,16 +1448,16 @@ void Random_one_dimension_boussinesq::set_white_noise_time(int s) // 设置是�
     else
     {
         set_n_m();
-        numberical_value_w.clear();
+        numerical_value_w.clear();
         // 创建一个随机数引擎
         double t0 = time(0); // 使用当前系统时间戳为随机数种子
         std::mt19937 gen(t0); // 使用Mersenne Twister引擎
-        // 定义两个随机数分布器
-        std::uniform_real_distribution<> dis(0, 2 * we); // 生成-1 * we ~ 2 * we均匀分布的随机小数
+        // 定义一个随机数分布器
+        std::uniform_real_distribution<> dis(0, 2 * we); // 生成0~ 2 * we均匀分布的随机小数
         use_white_noise_time = true;
         for(int i=0;i<show_n();i++)
         {
-            numberical_value_w.emplace_back(dis(gen));// 白噪声数值填充
+            numerical_value_w.emplace_back(dis(gen));// 白噪声数值填充
         }
     }
 }
@@ -1450,7 +1465,7 @@ void Random_one_dimension_boussinesq::set_white_noise_time(int s) // 设置是�
 double Random_one_dimension_boussinesq::actual_expectations_white_noise_time()
 {
     double expectations = 0;
-    for(double e : numberical_value_w)
+    for(double e : numerical_value_w)
     {
         expectations += e;
     }
@@ -1462,12 +1477,12 @@ double Random_one_dimension_boussinesq::fangcha_white_noise_time()
     double expectation =0;
     double expectations = 0;
     double d = 0;
-    for(double e : numberical_value_w)
+    for(double e : numerical_value_w)
     {
         expectation += e;
     }
     expectations = expectation / show_n();
-    for(double i : numberical_value_w)
+    for(double i : numerical_value_w)
     {
         d += (i - expectations) * (i - expectations);
     }
